@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KARN.EXE — Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:        #0b0e1a;
+    --panel:     #141a2e;
+    --panel-lt:  #1d2440;
+    --line:      #05070d;
+    --green:     #39ff88;
+    --coral:     #ff4d6d;
+    --amber:     #ffd23f;
+    --text:      #eef0f5;
+    --text-dim:  #8b93b3;
+    --font-pixel: 'Press Start 2P', monospace;
+    --font-mono:  'VT323', monospace;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:20px;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+
+  ::selection{ background:var(--green); color:var(--bg); }
+
+  a{ color:inherit; text-decoration:none; }
+
+  img, svg{ image-rendering:pixelated; }
+
+  /* ---------- pixel border utility (stepped/chunky NES-style frame) ---------- */
+  .pixel-border{
+    position:relative;
+    border:4px solid var(--line);
+    box-shadow:
+      0 0 0 4px var(--panel-lt),
+      6px 6px 0 0 var(--line);
+    background:var(--panel);
+  }
+  .pixel-border::before{
+    content:"";
+    position:absolute; inset:-4px;
+    border:4px solid var(--panel-lt);
+    pointer-events:none;
+  }
+
+  /* ---------- boot overlay ---------- */
+  #boot{
+    position:fixed; inset:0; z-index:999;
+    background:#000;
+    color:var(--green);
+    font-family:var(--font-mono);
+    font-size:22px;
+    padding:6vh 6vw;
+    white-space:pre-wrap;
+    transition:opacity .5s ease, visibility .5s ease;
+  }
+  #boot.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+  #boot .cursor{
+    display:inline-block; width:.55em; height:1em;
+    background:var(--green); vertical-align:text-bottom;
+    animation:blink 1s steps(1) infinite;
+  }
+  #boot .skip{
+    position:absolute; bottom:5vh; right:6vw;
+    color:var(--text-dim); font-size:14px;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  /* ---------- HUD nav ---------- */
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    background:var(--panel);
+    border-bottom:4px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 24px;
+  }
+  .logo{
+    font-family:var(--font-pixel); font-size:13px; color:var(--amber);
+    display:flex; align-items:center; gap:10px;
+  }
+  .logo .dot{ width:10px; height:10px; background:var(--green); box-shadow:0 0 0 2px var(--line); }
+  nav ul{ list-style:none; display:flex; gap:22px; }
+  nav a{
+    font-family:var(--font-pixel); font-size:11px; color:var(--text-dim);
+    padding:8px 4px; border-bottom:3px solid transparent;
+    transition:color .15s, border-color .15s;
+  }
+  nav a:hover, nav a:focus-visible{ color:var(--green); border-color:var(--green); }
+  .navToggle{ display:none; }
+
+  section{ padding:110px 6vw 90px; max-width:1100px; margin:0 auto; }
+
+  .eyebrow{
+    font-family:var(--font-pixel); font-size:11px; color:var(--coral);
+    letter-spacing:2px; margin-bottom:18px; display:block;
+  }
+  h1,h2,h3{ font-family:var(--font-pixel); line-height:1.6; }
+  h2{ font-size:22px; color:var(--amber); margin-bottom:34px; }
+  p{ color:var(--text); max-width:60ch; }
+
+  /* ---------- hero ---------- */
+  #home{
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:flex-start; justify-content:center; padding-top:90px;
+  }
+  .prompt-line{ font-family:var(--font-mono); font-size:22px; color:var(--green); margin-bottom:8px; }
+  h1{ font-size:38px; color:var(--text); margin:14px 0 18px; }
+  h1 .hi{ color:var(--green); }
+  .tagline{ font-size:22px; color:var(--text-dim); max-width:46ch; margin-bottom:34px; }
+
+  .sprite-wrap{ margin:26px 0 40px; }
+  #sprite{ width:120px; height:auto; animation:bob 1.4s steps(2) infinite; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-6px);} }
+
+  .btn-row{ display:flex; gap:16px; flex-wrap:wrap; }
+  .btn{
+    font-family:var(--font-pixel); font-size:12px; padding:16px 22px;
+    background:var(--green); color:var(--bg); border:none;
+    box-shadow:4px 4px 0 var(--line);
+    transition:transform .1s, box-shadow .1s;
+    cursor:pointer; display:inline-block;
+  }
+  .btn.secondary{ background:var(--panel); color:var(--amber); box-shadow:4px 4px 0 var(--line), 0 0 0 3px var(--amber) inset; }
+  .btn:hover{ transform:translate(2px,2px); box-shadow:2px 2px 0 var(--line); }
+  .scroll-cue{ margin-top:56px; font-size:14px; color:var(--text-dim); animation:blink 1.4s steps(1) infinite; }
+
+  /* ---------- character sheet (about) ---------- */
+  .sheet{ padding:34px; display:grid; grid-template-columns:1fr 1fr; gap:28px 40px; }
+  .sheet-row{ display:flex; flex-direction:column; gap:4px; }
+  .sheet-label{ font-family:var(--font-pixel); font-size:10px; color:var(--text-dim); }
+  .sheet-value{ font-size:22px; color:var(--text); }
+  .stat{ margin-top:6px; }
+  .stat-name{ display:flex; justify-content:space-between; font-size:16px; color:var(--text-dim); margin-bottom:4px; }
+  .bar{ height:14px; background:var(--line); }
+  .bar > span{ display:block; height:100%; background:var(--coral); }
+  .stat:nth-child(2) .bar > span{ background:var(--green); }
+  .stat:nth-child(3) .bar > span{ background:var(--amber); }
+
+  /* ---------- quest log (projects) ---------- */
+  .quest-grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+  .quest{ padding:24px; display:flex; flex-direction:column; gap:12px; }
+  .quest-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .quest-title{ font-family:var(--font-pixel); font-size:13px; color:var(--green); }
+  .quest-diff{ font-size:14px; color:var(--amber); white-space:nowrap; }
+  .quest p{ font-size:18px; color:var(--text-dim); }
+  .tags{ display:flex; flex-wrap:wrap; gap:8px; margin-top:auto; }
+  .tag{ font-size:13px; padding:3px 9px; background:var(--panel-lt); color:var(--text); border:2px solid var(--line); }
+
+  /* ---------- inventory (skills) ---------- */
+  .inventory{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:16px; }
+  .item{
+    aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; padding:12px; text-align:center;
+  }
+  .item .glyph{ font-size:26px; color:var(--amber); font-family:var(--font-pixel); }
+  .item span.name{ font-size:15px; color:var(--text-dim); }
+
+  /* ---------- save point (contact) ---------- */
+  .save{ padding:34px; text-align:center; }
+  .save h2{ margin-bottom:14px; }
+  .save p{ margin:0 auto 26px; }
+  .links{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+
+  footer{ text-align:center; padding:30px; color:var(--text-dim); font-size:14px; }
+
+  @media (max-width:760px){
+    nav ul{ display:none; }
+    .sheet{ grid-template-columns:1fr; }
+    .quest-grid{ grid-template-columns:1fr; }
+    h1{ font-size:28px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div id="bootText"></div>
+  <div class="skip">click / scroll to skip</div>
+</div>
+
+<header>
+  <div class="logo"><span class="dot"></span>KARN.EXE</div>
+  <nav>
+    <ul>
+      <li><a href="#home">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#quests">Quests</a></li>
+      <li><a href="#inventory">Inventory</a></li>
+      <li><a href="#save">Save</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section id="home">
+  <span class="prompt-line">&gt; loading profile...</span>
+  <div class="sprite-wrap">
+    <svg id="sprite" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+  <h1>Hey, I'm <span class="hi">Karn</span>_</h1>
+  <p class="tagline">Computer science undergrad who likes building tools instead of just using them — terminals, retrieval pipelines, bots, and whatever else needs a weekend project.</p>
+  <div class="btn-row">
+    <a class="btn" href="#quests">View Quests</a>
+    <a class="btn secondary" href="#save">Save &amp; Contact</a>
+  </div>
+  <div class="scroll-cue">▼ scroll to continue ▼</div>
+</section>
+
+<section id="about">
+  <span class="eyebrow">// character sheet</span>
+  <h2>About</h2>
+  <div class="sheet pixel-border">
+    <div class="sheet-row">
+      <span class="sheet-label">CLASS</span>
+      <span class="sheet-value">CS Undergraduate</span>
+    </div>
+    <div class="sheet-row">
+      <span class="sheet-label">CURRENT QUESTS</span>
+      <span class="sheet-value">Software Engineering · DBMS</span>
+    </div>
+    <div class="sheet-row" style="grid-column:1/-1">
+      <span class="sheet-label">BIO</span>
+      <span class="sheet-value" style="font-size:18px;">Edit this with your own words — a couple of sentences on what you're into and what you're working toward.</span>
+    </div>
+    <div class="sheet-row" style="grid-column:1/-1">
+      <span class="sheet-label">STATS (placeholder — adjust to taste)</span>
+      <div class="stat">
+        <div class="stat-name"><span>C++ / DSA</span><span>80%</span></div>
+        <div class="bar"><span style="width:80%"></span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-name"><span>Python / ML tooling</span><span>70%</span></div>
+        <div class="bar"><span style="width:70%"></span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-name"><span>Web / Frontend</span><span>65%</span></div>
+        <div class="bar"><span style="width:65%"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quests">
+  <span class="eyebrow">// quest log</span>
+  <h2>Projects</h2>
+  <div class="quest-grid">
+
+    <div class="quest pixel-border">
+      <div class="quest-head">
+        <span class="quest-title">Custom Terminal Emulator</span>
+        <span class="quest-diff">★★★☆</span>
+      </div>
+      <p>Built a Node.js terminal from scratch using raw ANSI escape codes — tab completion, cursor movement, color-coded output, six switchable themes, and a figlet boot banner.</p>
+      <div class="tags"><span class="tag">Node.js</span><span class="tag">ANSI/TUI</span><span class="tag">CLI</span></div>
+    </div>
+
+    <div class="quest pixel-border">
+      <div class="quest-head">
+        <span class="quest-title">PDF RAG Pipeline</span>
+        <span class="quest-diff">★★★★</span>
+      </div>
+      <p>A local, no-API RAG tool that answers plain-English questions about a PDF. Chunks text, embeds with Ollama, stores vectors in ChromaDB, and answers grounded strictly in retrieved context.</p>
+      <div class="tags"><span class="tag">Python</span><span class="tag">ChromaDB</span><span class="tag">Ollama / LLM</span></div>
+    </div>
+
+    <div class="quest pixel-border">
+      <div class="quest-head">
+        <span class="quest-title">VIBIN CITY — Discord Bot</span>
+        <span class="quest-diff">★★★☆</span>
+      </div>
+      <p>A Discord bot that impersonates my own persona in a friend-group server, powered by a locally-run Ollama model — no cloud calls, all on-device.</p>
+      <div class="tags"><span class="tag">Discord.js</span><span class="tag">Ollama</span><span class="tag">LLM</span></div>
+    </div>
+
+    <div class="quest pixel-border">
+      <div class="quest-head">
+        <span class="quest-title">MCQ Practice Site (CSE 320)</span>
+        <span class="quest-diff">★★☆☆</span>
+      </div>
+      <p>A self-contained interactive practice website with 220 questions across six units, built as a single dark-themed HTML file straight from course material.</p>
+      <div class="tags"><span class="tag">HTML/CSS/JS</span><span class="tag">Single-file</span></div>
+    </div>
+
+  </div>
+</section>
+
+<section id="inventory">
+  <span class="eyebrow">// inventory</span>
+  <h2>Tools &amp; Languages</h2>
+  <div class="inventory">
+    <div class="item pixel-border"><span class="glyph">C++</span><span class="name">Competitive Prog.</span></div>
+    <div class="item pixel-border"><span class="glyph">PY</span><span class="name">Python</span></div>
+    <div class="item pixel-border"><span class="glyph">JS</span><span class="name">JavaScript</span></div>
+    <div class="item pixel-border"><span class="glyph">SQL</span><span class="name">DBMS</span></div>
+    <div class="item pixel-border"><span class="glyph">GIT</span><span class="name">Git</span></div>
+    <div class="item pixel-border"><span class="glyph">LLM</span><span class="name">Local LLM tooling</span></div>
+  </div>
+</section>
+
+<section id="save">
+  <div class="save pixel-border">
+    <span class="eyebrow" style="text-align:center;">// save point</span>
+    <h2>Let's connect</h2>
+    <p style="margin-left:auto;margin-right:auto;">Add your real email, GitHub, and LinkedIn links here before this goes live.</p>
+    <div class="links">
+      <a class="btn" href="mailto:you@example.com">Email</a>
+      <a class="btn secondary" href="#">GitHub</a>
+      <a class="btn secondary" href="#">LinkedIn</a>
+    </div>
+  </div>
+</section>
+
+<footer>KARN.EXE — built with pixels &amp; patience</footer>
+
+<script>
+  // ---- pixel sprite (12x16 grid), two idle frames ----
+  const frameA = [
+    "......HH....",
+    ".....HHHH...",
+    ".....HHHH...",
+    "....DKKKKD..",
+    "....DKKKKD..",
+    "....DKKKKD..",
+    ".....DDDD...",
+    "...DBBBBBD..",
+    "..DBBBBBBBD.",
+    "..DBBBBBBBD.",
+    ".DBBBBBBBBD.",
+    "..DBB..BBD..",
+    "..DBB..BBD..",
+    "..DD....DD..",
+    ".DD......DD.",
+    "............"
+  ];
+  const colors = { H:"var(--coral)", K:"var(--amber)", B:"var(--green)", D:"var(--line)" };
+
+  function buildSprite(){
+    const svg = document.getElementById('sprite');
+    let rects = "";
+    frameA.forEach((row,y)=>{
+      [...row].forEach((c,x)=>{
+        if(c !== "." && c !== " "){
+          rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${colors[c] || '#fff'}"></rect>`;
+        }
+      });
+    });
+    svg.innerHTML = rects;
+  }
+  buildSprite();
+
+  // ---- boot sequence ----
+  const bootLines = [
+    "> BOOTING KARN.EXE ...",
+    "> loading modules: terminal.js, rag.py, discord-bot.js",
+    "> checking coursework: CSE320, DBMS ... OK",
+    "> READY."
+  ];
+  const bootEl = document.getElementById('bootText');
+  const bootOverlay = document.getElementById('boot');
+  let li = 0, ci = 0;
+
+  function typeBoot(){
+    if(li >= bootLines.length){
+      bootEl.innerHTML += '<span class="cursor"></span>';
+      setTimeout(hideBoot, 500);
+      return;
+    }
+    const line = bootLines[li];
+    if(ci <= line.length){
+      const typed = bootLines.slice(0,li).join("\n") + (li>0 ? "\n" : "") + line.slice(0,ci);
+      bootEl.textContent = typed;
+      ci++;
+      setTimeout(typeBoot, 18);
+    } else {
+      li++; ci = 0;
+      setTimeout(typeBoot, 200);
+    }
+  }
+
+  function hideBoot(){
+    bootOverlay.classList.add('hide');
+  }
+
+  // respect reduced motion: skip the typing animation, just show it instantly then hide
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(prefersReduced){
+    bootEl.textContent = bootLines.join("\n");
+    setTimeout(hideBoot, 400);
+  } else {
+    typeBoot();
+  }
+
+  bootOverlay.addEventListener('click', hideBoot);
+  window.addEventListener('scroll', hideBoot, { once:true });
+  window.addEventListener('keydown', hideBoot, { once:true });
+</script>
+
+</body>
+</html>
