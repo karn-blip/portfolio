@@ -26,7 +26,10 @@
   html{ scroll-behavior:smooth; }
 
   body{
-    background:var(--bg);
+    background:
+      linear-gradient(rgba(5, 10, 20, .76), rgba(5, 10, 20, .84)),
+      url("assets/pixel-art-castle.png") center / cover fixed,
+      var(--bg);
     color:var(--text);
     font-family:var(--font-mono);
     font-size:20px;
@@ -176,11 +179,44 @@
 
   footer{ text-align:center; padding:30px; color:var(--text-dim); font-size:14px; }
 
+  /* ---------- interactive systems ---------- */
+  body[data-theme="dungeon"]{ --bg:#18100b; --panel:#291911; --panel-lt:#4b2d1c; --line:#120906; --green:#ff9f43; --coral:#ff5f77; --amber:#ffe16a; --text:#fff3df; --text-dim:#c39d78; }
+  body[data-theme="terminal"]{ --bg:#07120c; --panel:#0c2114; --panel-lt:#123520; --line:#020805; --green:#75ff9c; --coral:#ff6985; --amber:#d5ff63; --text:#e9ffe9; --text-dim:#92b79b; }
+  .hud-actions{ display:flex; align-items:center; gap:10px; }
+  .icon-btn{ font-family:var(--font-pixel); font-size:10px; padding:9px 10px; color:var(--amber); background:var(--panel-lt); border:2px solid var(--line); cursor:pointer; }
+  .icon-btn:hover,.icon-btn:focus-visible{ color:var(--green); outline:2px solid var(--green); }
+  #progressHud{ position:fixed; right:16px; bottom:16px; z-index:70; width:min(240px,calc(100vw - 32px)); padding:13px; background:var(--panel); border:3px solid var(--line); box-shadow:4px 4px 0 var(--line); }
+  #progressHud .hud-label{ font-family:var(--font-pixel); font-size:9px; color:var(--amber); display:flex; justify-content:space-between; margin-bottom:8px; }
+  #xpBar{ height:10px; background:var(--line); }
+  #xpBar span{ display:block; width:0; height:100%; background:var(--green); transition:width .35s steps(8); }
+  .filter-row{ display:flex; gap:10px; flex-wrap:wrap; margin:-12px 0 28px; }
+  .filter.active{ background:var(--green); color:var(--bg); }
+  .quest{ cursor:pointer; transition:transform .15s steps(2), filter .15s; }
+  .quest:hover,.quest:focus-visible{ transform:translate(-3px,-3px); filter:brightness(1.15); outline:3px solid var(--green); }
+  .quest[hidden]{ display:none; }
+  .modal{ position:fixed; inset:0; z-index:200; display:grid; place-items:center; padding:20px; background:rgba(0,0,0,.72); }
+  .modal[hidden]{ display:none; }
+  .modal-card{ width:min(690px,100%); max-height:88vh; overflow:auto; padding:30px; background:var(--panel); border:4px solid var(--line); box-shadow:7px 7px 0 var(--panel-lt); }
+  .modal-head{ display:flex; gap:16px; align-items:start; justify-content:space-between; margin-bottom:18px; }
+  .modal h3{ color:var(--green); font-size:17px; }
+  .modal p{ color:var(--text-dim); margin-bottom:20px; }
+  .modal .close{ flex:0 0 auto; }
+  .detail-stack{ display:flex; flex-wrap:wrap; gap:8px; margin:20px 0; }
+  .cmd-hint{ font-size:15px; color:var(--text-dim); margin-top:18px; }
+  #terminalOutput{ min-height:130px; color:var(--green); white-space:pre-wrap; margin-bottom:14px; }
+  #commandInput{ width:100%; font:22px var(--font-mono); color:var(--green); background:#05070d; border:3px solid var(--line); padding:11px; caret-color:var(--green); }
+  #commandInput:focus{ outline:3px solid var(--green); }
+  #toast{ position:fixed; top:75px; left:50%; z-index:300; transform:translate(-50%,-20px); opacity:0; pointer-events:none; padding:12px 16px; color:var(--bg); background:var(--green); font-family:var(--font-pixel); font-size:10px; box-shadow:4px 4px 0 var(--line); transition:.2s steps(2); }
+  #toast.show{ opacity:1; transform:translate(-50%,0); }
+  .thunder{ animation:flash .55s steps(2); }
+  @keyframes flash{ 0%,100%{ filter:none; } 35%{ filter:brightness(1.55) contrast(1.1); } }
+
   @media (max-width:760px){
     nav ul{ display:none; }
     .sheet{ grid-template-columns:1fr; }
     .quest-grid{ grid-template-columns:1fr; }
     h1{ font-size:28px; }
+    .hud-actions .icon-btn:first-child{ display:none; }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -206,6 +242,10 @@
       <li><a href="#save">Save</a></li>
     </ul>
   </nav>
+  <div class="hud-actions">
+    <button class="icon-btn" id="terminalButton" type="button" aria-haspopup="dialog">~ COMMAND</button>
+    <button class="icon-btn" id="soundButton" type="button" aria-pressed="false">SFX: OFF</button>
+  </div>
 </header>
 
 <section id="home">
@@ -259,43 +299,50 @@
 <section id="quests">
   <span class="eyebrow">// quest log</span>
   <h2>Projects</h2>
+  <div class="filter-row" aria-label="Project filters">
+    <button class="btn filter active" type="button" data-filter="all">ALL</button>
+    <button class="btn filter" type="button" data-filter="web">WEB</button>
+    <button class="btn filter" type="button" data-filter="python">PYTHON</button>
+    <button class="btn filter" type="button" data-filter="ai">AI / LLM</button>
+    <button class="btn filter" type="button" data-filter="cli">CLI</button>
+  </div>
   <div class="quest-grid">
 
-    <div class="quest pixel-border">
+    <article class="quest pixel-border" tabindex="0" data-project="terminal" data-tags="cli">
       <div class="quest-head">
         <span class="quest-title">Custom Terminal Emulator</span>
         <span class="quest-diff">★★★☆</span>
       </div>
       <p>Built a Node.js terminal from scratch using raw ANSI escape codes — tab completion, cursor movement, color-coded output, six switchable themes, and a figlet boot banner.</p>
       <div class="tags"><span class="tag">Node.js</span><span class="tag">ANSI/TUI</span><span class="tag">CLI</span></div>
-    </div>
+    </article>
 
-    <div class="quest pixel-border">
+    <article class="quest pixel-border" tabindex="0" data-project="rag" data-tags="python ai">
       <div class="quest-head">
         <span class="quest-title">PDF RAG Pipeline</span>
         <span class="quest-diff">★★★★</span>
       </div>
       <p>A local, no-API RAG tool that answers plain-English questions about a PDF. Chunks text, embeds with Ollama, stores vectors in ChromaDB, and answers grounded strictly in retrieved context.</p>
       <div class="tags"><span class="tag">Python</span><span class="tag">ChromaDB</span><span class="tag">Ollama / LLM</span></div>
-    </div>
+    </article>
 
-    <div class="quest pixel-border">
+    <article class="quest pixel-border" tabindex="0" data-project="discord" data-tags="ai">
       <div class="quest-head">
         <span class="quest-title">VIBIN CITY — Discord Bot</span>
         <span class="quest-diff">★★★☆</span>
       </div>
       <p>A Discord bot that impersonates my own persona in a friend-group server, powered by a locally-run Ollama model — no cloud calls, all on-device.</p>
       <div class="tags"><span class="tag">Discord.js</span><span class="tag">Ollama</span><span class="tag">LLM</span></div>
-    </div>
+    </article>
 
-    <div class="quest pixel-border">
+    <article class="quest pixel-border" tabindex="0" data-project="mcq" data-tags="web">
       <div class="quest-head">
         <span class="quest-title">MCQ Practice Site (CSE 320)</span>
         <span class="quest-diff">★★☆☆</span>
       </div>
       <p>A self-contained interactive practice website with 220 questions across six units, built as a single dark-themed HTML file straight from course material.</p>
       <div class="tags"><span class="tag">HTML/CSS/JS</span><span class="tag">Single-file</span></div>
-    </div>
+    </article>
 
   </div>
 </section>
@@ -304,12 +351,12 @@
   <span class="eyebrow">// inventory</span>
   <h2>Tools &amp; Languages</h2>
   <div class="inventory">
-    <div class="item pixel-border"><span class="glyph">C++</span><span class="name">Competitive Prog.</span></div>
-    <div class="item pixel-border"><span class="glyph">PY</span><span class="name">Python</span></div>
-    <div class="item pixel-border"><span class="glyph">JS</span><span class="name">JavaScript</span></div>
-    <div class="item pixel-border"><span class="glyph">SQL</span><span class="name">DBMS</span></div>
-    <div class="item pixel-border"><span class="glyph">GIT</span><span class="name">Git</span></div>
-    <div class="item pixel-border"><span class="glyph">LLM</span><span class="name">Local LLM tooling</span></div>
+    <button class="item pixel-border" type="button" data-skill="C++ / DSA — algorithmic problem solving, complexity analysis, and competitive programming."><span class="glyph">C++</span><span class="name">Competitive Prog.</span></button>
+    <button class="item pixel-border" type="button" data-skill="Python — automation, data tools, and practical machine-learning workflows."><span class="glyph">PY</span><span class="name">Python</span></button>
+    <button class="item pixel-border" type="button" data-skill="JavaScript — browser interfaces, interactive components, and Discord bots."><span class="glyph">JS</span><span class="name">JavaScript</span></button>
+    <button class="item pixel-border" type="button" data-skill="SQL / DBMS — relational data modelling, queries, and database fundamentals."><span class="glyph">SQL</span><span class="name">DBMS</span></button>
+    <button class="item pixel-border" type="button" data-skill="Git — source control, project history, and collaborative workflows."><span class="glyph">GIT</span><span class="name">Git</span></button>
+    <button class="item pixel-border" type="button" data-skill="Local LLM tooling — offline model workflows with Ollama and retrieval pipelines."><span class="glyph">LLM</span><span class="name">Local LLM tooling</span></button>
   </div>
 </section>
 
@@ -327,6 +374,30 @@
 </section>
 
 <footer>KARN.EXE — built with pixels &amp; patience</footer>
+
+<aside id="progressHud" aria-live="polite">
+  <div class="hud-label"><span>EXPLORATION XP</span><span id="xpText">0 / 6</span></div>
+  <div id="xpBar"><span></span></div>
+</aside>
+
+<div class="modal" id="projectModal" hidden role="dialog" aria-modal="true" aria-labelledby="projectTitle">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="projectTitle"></h3><button class="icon-btn close" type="button">X CLOSE</button></div>
+    <p id="projectDescription"></p><div class="detail-stack" id="projectStack"></div>
+    <button class="btn secondary projectClose" type="button">RETURN TO QUEST LOG</button>
+  </div>
+</div>
+
+<div class="modal" id="terminalModal" hidden role="dialog" aria-modal="true" aria-labelledby="terminalTitle">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="terminalTitle">KARN.EXE COMMAND TERMINAL</h3><button class="icon-btn close" type="button">X CLOSE</button></div>
+    <div id="terminalOutput">Type <strong>help</strong> to list commands.</div>
+    <label for="commandInput" class="sheet-label">COMMAND INPUT</label>
+    <input id="commandInput" autocomplete="off" spellcheck="false" placeholder="help">
+    <p class="cmd-hint">Commands: help · about · projects · contact · theme [castle|dungeon|terminal] · sound · clear</p>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
   // ---- pixel sprite (12x16 grid), two idle frames ----
@@ -409,6 +480,129 @@
   bootOverlay.addEventListener('click', hideBoot);
   window.addEventListener('scroll', hideBoot, { once:true });
   window.addEventListener('keydown', hideBoot, { once:true });
+
+  // ---- interactive quest log, terminal, inventory, and achievements ----
+  const projects = {
+    terminal: { title:"Custom Terminal Emulator", description:"A Node.js terminal built from raw ANSI escape codes. It supports tab completion, cursor movement, six themes, a figlet boot banner, and color-coded output.", stack:["Node.js", "ANSI escape codes", "CLI / TUI"] },
+    rag: { title:"PDF RAG Pipeline", description:"An offline question-answering tool for PDFs. It chunks text, creates local embeddings, stores vectors in ChromaDB, then answers using only retrieved context.", stack:["Python", "ChromaDB", "Ollama", "Retrieval"] },
+    discord: { title:"VIBIN CITY — Discord Bot", description:"A personality-driven Discord bot that runs locally with Ollama. The goal: fun friend-group interactions without cloud model calls.", stack:["Discord.js", "Ollama", "Local LLM"] },
+    mcq: { title:"MCQ Practice Site (CSE 320)", description:"A focused single-file study site with 220 questions across six course units, designed for quick self-testing in a dark interface.", stack:["HTML", "CSS", "JavaScript"] }
+  };
+  const projectModal = document.getElementById('projectModal');
+  const terminalModal = document.getElementById('terminalModal');
+  const projectTitle = document.getElementById('projectTitle');
+  const projectDescription = document.getElementById('projectDescription');
+  const projectStack = document.getElementById('projectStack');
+  const commandInput = document.getElementById('commandInput');
+  const terminalOutput = document.getElementById('terminalOutput');
+  const toast = document.getElementById('toast');
+  const progress = new Set();
+  let audioOn = false;
+  let toastTimer;
+
+  function showToast(message){
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toast.classList.remove('show'), 2600);
+  }
+  function award(id, message){
+    if(progress.has(id)) return;
+    progress.add(id);
+    const total = 6;
+    document.getElementById('xpText').textContent = `${progress.size} / ${total}`;
+    document.querySelector('#xpBar span').style.width = `${Math.min(progress.size / total, 1) * 100}%`;
+    showToast(`ACHIEVEMENT UNLOCKED: ${message}`);
+  }
+  function beep(frequency=180, duration=.06){
+    if(!audioOn || !window.AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.frequency.value = frequency; osc.type = 'square'; gain.gain.value = .035;
+    osc.connect(gain).connect(ctx.destination); osc.start();
+    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + duration);
+    osc.stop(ctx.currentTime + duration); osc.addEventListener('ended',()=>ctx.close());
+  }
+  function openProject(id){
+    const project = projects[id]; if(!project) return;
+    projectTitle.textContent = project.title;
+    projectDescription.textContent = project.description;
+    projectStack.innerHTML = project.stack.map(item=>`<span class="tag">${item}</span>`).join('');
+    projectModal.hidden = false;
+    projectModal.querySelector('.close').focus();
+    award(`project-${id}`, 'QUEST INSPECTED'); beep(240);
+  }
+  function closeModal(modal){ modal.hidden = true; }
+  document.querySelectorAll('.quest').forEach(card=>{
+    card.addEventListener('click',()=>openProject(card.dataset.project));
+    card.addEventListener('keydown',event=>{ if(event.key === 'Enter' || event.key === ' '){ event.preventDefault(); openProject(card.dataset.project); } });
+  });
+  document.querySelectorAll('.filter').forEach(button=>button.addEventListener('click',()=>{
+    const filter = button.dataset.filter;
+    document.querySelectorAll('.filter').forEach(item=>item.classList.toggle('active', item === button));
+    document.querySelectorAll('.quest').forEach(card=>card.hidden = filter !== 'all' && !card.dataset.tags.includes(filter));
+    award('filter', 'QUEST TRACKER ONLINE'); beep(155);
+  }));
+  document.querySelectorAll('.item[data-skill]').forEach(item=>item.addEventListener('click',()=>{
+    showToast(item.dataset.skill); award('inventory', 'INVENTORY EXAMINED'); beep(290);
+  }));
+  document.querySelectorAll('.modal').forEach(modal=>{
+    modal.addEventListener('click',event=>{ if(event.target === modal) closeModal(modal); });
+    modal.querySelectorAll('.close,.projectClose').forEach(button=>button.addEventListener('click',()=>closeModal(modal)));
+  });
+  function setTheme(theme){
+    document.body.dataset.theme = theme === 'castle' ? '' : theme;
+    showToast(`THEME LOADED: ${theme.toUpperCase()}`);
+    award('theme', 'REALITY RECOLORED'); beep(200);
+  }
+  function runCommand(raw){
+    const command = raw.trim().toLowerCase();
+    const commands = {
+      help:"AVAILABLE COMMANDS\nhelp — show this list\nabout — jump to character sheet\nprojects — jump to quest log\ncontact — jump to save point\ntheme castle|dungeon|terminal — change palette\nsound — toggle ambient SFX\nclear — clear terminal",
+      about:"Opening character sheet...",
+      projects:"Opening quest log...",
+      contact:"Opening save point...",
+      sound:"Sound toggled.",
+      clear:""
+    };
+    if(command.startsWith('theme ')){
+      const theme = command.split(/\s+/)[1];
+      if(["castle","dungeon","terminal"].includes(theme)){ setTheme(theme); terminalOutput.textContent = `Theme changed to ${theme}.`; }
+      else terminalOutput.textContent = "Unknown theme. Try castle, dungeon, or terminal.";
+    } else if(command === 'clear') terminalOutput.textContent = '';
+    else if(commands[command] !== undefined){
+      terminalOutput.textContent = commands[command];
+      if(["about","projects","contact"].includes(command)){
+        document.getElementById(command === 'projects' ? 'quests' : command === 'contact' ? 'save' : 'about').scrollIntoView({behavior:'smooth'});
+        closeModal(terminalModal);
+      }
+      if(command === 'sound') document.getElementById('soundButton').click();
+    } else terminalOutput.textContent = `Unknown command: ${command}\nType help for available commands.`;
+    award('terminal', 'TERMINAL ACCESS GRANTED'); beep(220);
+  }
+  document.getElementById('terminalButton').addEventListener('click',()=>{ terminalModal.hidden = false; commandInput.focus(); });
+  commandInput.addEventListener('keydown',event=>{ if(event.key === 'Enter'){ runCommand(commandInput.value); commandInput.value = ''; } });
+  document.getElementById('soundButton').addEventListener('click',event=>{
+    audioOn = !audioOn; event.currentTarget.textContent = `SFX: ${audioOn ? 'ON' : 'OFF'}`; event.currentTarget.setAttribute('aria-pressed', audioOn);
+    if(audioOn) beep(330,.12);
+    showToast(audioOn ? 'AMBIENT SFX ENABLED' : 'AMBIENT SFX MUTED'); award('sound', 'SOUNDSTONE ACTIVATED');
+  });
+  document.querySelector('.logo').addEventListener('click',()=>{ document.body.classList.add('thunder'); setTimeout(()=>document.body.classList.remove('thunder'), 550); award('logo', 'STORM CALLER'); beep(80,.18); });
+  document.querySelector('.logo').setAttribute('role','button'); document.querySelector('.logo').setAttribute('tabindex','0');
+  document.querySelector('.logo').addEventListener('keydown',event=>{ if(event.key === 'Enter') event.currentTarget.click(); });
+  window.addEventListener('keydown',event=>{
+    if(event.key === '~' && !terminalModal.hidden) return;
+    if(event.key === '~'){ event.preventDefault(); terminalModal.hidden = false; commandInput.focus(); }
+    if(event.key === 'Escape') document.querySelectorAll('.modal:not([hidden])').forEach(closeModal);
+  });
+  let konami = [];
+  const code = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  window.addEventListener('keydown',event=>{
+    konami.push(event.key); konami = konami.slice(-code.length);
+    if(konami.join('|').toLowerCase() === code.join('|').toLowerCase()){
+      setTheme('terminal'); showToast('SECRET UNLOCKED: THE CASTLE REMEMBERS YOU'); award('secret', 'ANCIENT CHEAT CODE');
+    }
+  });
 </script>
 
 </body>
