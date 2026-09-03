@@ -1,230 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KARN.EXE — Portfolio</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:        #0b0e1a;
-    --panel:     #141a2e;
-    --panel-lt:  #1d2440;
-    --line:      #05070d;
-    --green:     #39ff88;
-    --coral:     #ff4d6d;
-    --amber:     #ffd23f;
-    --text:      #eef0f5;
-    --text-dim:  #8b93b3;
-    --font-pixel: 'Press Start 2P', monospace;
-    --font-mono:  'VT323', monospace;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AAYUSH_KARN.EXE - Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- jsPDF to compile and download the CV on the fly -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #060810;
+      --panel: #0e1322;
+      --panel-lt: #182038;
+      --line: #030509;
+      --green: #39ff88;
+      --coral: #ff4d6d;
+      --amber: #ffd23f;
+      --text: #eef0f5;
+      --text-dim: #757e9e;
+      --font-pixel: 'Press Start 2P', monospace;
+      --font-mono: 'VT323', monospace;
+    }
 
-  *{ box-sizing:border-box; margin:0; padding:0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
-  html{ scroll-behavior:smooth; }
+    body {
+      background:
+        linear-gradient(rgba(5, 8, 16, .84), rgba(5, 8, 16, .90)),
+        url("assets/pixel-art-castle.png") center / cover fixed,
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 20px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
 
-  body{
-    background:
-      linear-gradient(rgba(5, 10, 20, .76), rgba(5, 10, 20, .84)),
-      url("assets/pixel-art-castle.png") center / cover fixed,
-      var(--bg);
-    color:var(--text);
-    font-family:var(--font-mono);
-    font-size:20px;
-    line-height:1.5;
-    overflow-x:hidden;
-  }
+    ::selection { background: var(--green); color: var(--bg); }
+    a { color: inherit; text-decoration: none; }
 
-  ::selection{ background:var(--green); color:var(--bg); }
+    #bg-canvas {
+      position: fixed; inset: 0; width: 100vw; height: 100vh;
+      z-index: -1; pointer-events: none;
+    }
 
-  a{ color:inherit; text-decoration:none; }
+    .crt-overlay {
+      position: fixed; inset: 0; z-index: 900; pointer-events: none;
+      background:
+        radial-gradient(ellipse at center, transparent 65%, rgba(0,0,0,0.85) 100%),
+        repeating-linear-gradient(0deg, rgba(0,0,0,0.14) 0px, rgba(0,0,0,0.14) 2px, transparent 2px, transparent 4px);
+    }
 
-  img, svg{ image-rendering:pixelated; }
+    .pixel-border {
+      position: relative;
+      border: 4px solid var(--line);
+      box-shadow: 0 0 0 4px var(--panel-lt), 6px 6px 0 0 var(--line);
+      background: var(--panel);
+    }
+    .pixel-border::before {
+      content: ""; position: absolute; inset: -4px;
+      border: 4px solid var(--panel-lt); pointer-events: none;
+    }
 
-  /* ---------- pixel border utility (stepped/chunky NES-style frame) ---------- */
-  .pixel-border{
-    position:relative;
-    border:4px solid var(--line);
-    box-shadow:
-      0 0 0 4px var(--panel-lt),
-      6px 6px 0 0 var(--line);
-    background:var(--panel);
-  }
-  .pixel-border::before{
-    content:"";
-    position:absolute; inset:-4px;
-    border:4px solid var(--panel-lt);
-    pointer-events:none;
-  }
+    /* Boot */
+    #boot {
+      position: fixed; inset: 0; z-index: 999;
+      background: #000; color: var(--green); font-family: var(--font-mono); font-size: 22px;
+      padding: 6vh 6vw; white-space: pre-wrap; transition: opacity .5s ease, visibility .5s ease;
+    }
+    #boot.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    #boot .cursor { display: inline-block; width: .55em; height: 1em; background: var(--green); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
+    #boot .skip { position: absolute; bottom: 5vh; right: 6vw; color: var(--text-dim); font-size: 14px; }
+    @keyframes blink { 50% { opacity: 0; } }
 
-  /* ---------- boot overlay ---------- */
-  #boot{
-    position:fixed; inset:0; z-index:999;
-    background:#000;
-    color:var(--green);
-    font-family:var(--font-mono);
-    font-size:22px;
-    padding:6vh 6vw;
-    white-space:pre-wrap;
-    transition:opacity .5s ease, visibility .5s ease;
-  }
-  #boot.hide{ opacity:0; visibility:hidden; pointer-events:none; }
-  #boot .cursor{
-    display:inline-block; width:.55em; height:1em;
-    background:var(--green); vertical-align:text-bottom;
-    animation:blink 1s steps(1) infinite;
-  }
-  #boot .skip{
-    position:absolute; bottom:5vh; right:6vw;
-    color:var(--text-dim); font-size:14px;
-  }
-  @keyframes blink{ 50%{ opacity:0; } }
+    /* Header */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      background: rgba(14, 19, 34, 0.95); backdrop-filter: blur(4px);
+      border-bottom: 4px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 24px;
+    }
+    .logo {
+      font-family: var(--font-pixel); font-size: 12px; color: var(--amber);
+      display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;
+    }
+    .logo .dot { width: 10px; height: 10px; background: var(--green); box-shadow: 0 0 0 2px var(--line); }
+    nav ul { list-style: none; display: flex; gap: 20px; align-items: center; }
+    nav a {
+      font-family: var(--font-pixel); font-size: 11px; color: var(--text-dim);
+      padding: 8px 4px; border-bottom: 3px solid transparent; transition: color .15s, border-color .15s;
+    }
+    nav a:hover { color: var(--green); border-color: var(--green); }
+    nav a.nav-highlight { color: var(--amber); }
 
-  /* ---------- HUD nav ---------- */
-  header{
-    position:fixed; top:0; left:0; right:0; z-index:50;
-    background:var(--panel);
-    border-bottom:4px solid var(--line);
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 24px;
-  }
-  .logo{
-    font-family:var(--font-pixel); font-size:13px; color:var(--amber);
-    display:flex; align-items:center; gap:10px;
-  }
-  .logo .dot{ width:10px; height:10px; background:var(--green); box-shadow:0 0 0 2px var(--line); }
-  nav ul{ list-style:none; display:flex; gap:22px; }
-  nav a{
-    font-family:var(--font-pixel); font-size:11px; color:var(--text-dim);
-    padding:8px 4px; border-bottom:3px solid transparent;
-    transition:color .15s, border-color .15s;
-  }
-  nav a:hover, nav a:focus-visible{ color:var(--green); border-color:var(--green); }
-  .navToggle{ display:none; }
+    .hud-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-btn { font-family: var(--font-pixel); font-size: 10px; padding: 9px 10px; color: var(--amber); background: var(--panel-lt); border: 2px solid var(--line); cursor: pointer; }
+    .icon-btn:hover { color: var(--green); outline: 2px solid var(--green); }
 
-  section{ padding:110px 6vw 90px; max-width:1100px; margin:0 auto; }
+    section { padding: 110px 6vw 80px; max-width: 1150px; margin: 0 auto; position: relative; z-index: 1; }
+    .eyebrow { font-family: var(--font-pixel); font-size: 11px; color: var(--coral); letter-spacing: 2px; margin-bottom: 14px; display: block; }
+    h1, h2, h3 { font-family: var(--font-pixel); line-height: 1.6; }
+    h2 { font-size: 22px; color: var(--amber); margin-bottom: 34px; }
+    p { color: var(--text); max-width: 64ch; }
 
-  .eyebrow{
-    font-family:var(--font-pixel); font-size:11px; color:var(--coral);
-    letter-spacing:2px; margin-bottom:18px; display:block;
-  }
-  h1,h2,h3{ font-family:var(--font-pixel); line-height:1.6; }
-  h2{ font-size:22px; color:var(--amber); margin-bottom:34px; }
-  p{ color:var(--text); max-width:60ch; }
+    /* Hero Layout */
+    #home { min-height: 100vh; display: grid; grid-template-columns: 1.3fr 0.7fr; align-items: center; gap: 40px; padding-top: 80px; }
+    .prompt-line { font-family: var(--font-mono); font-size: 22px; color: var(--green); margin-bottom: 8px; display: block; }
+    h1 { font-size: 38px; color: var(--text); margin: 10px 0 16px; }
+    h1 .hi { color: var(--green); }
+    .tagline { font-size: 22px; color: var(--text-dim); margin-bottom: 28px; line-height: 1.6; }
+    .btn-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .btn {
+      font-family: var(--font-pixel); font-size: 11px; padding: 15px 20px;
+      background: var(--green); color: var(--bg); border: none; box-shadow: 4px 4px 0 var(--line);
+      cursor: pointer; display: inline-block; transition: transform .1s, box-shadow .1s;
+    }
+    .btn.secondary { background: var(--panel); color: var(--amber); box-shadow: 4px 4px 0 var(--line), 0 0 0 3px var(--amber) inset; }
+    .btn:hover { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--line); }
 
-  /* ---------- hero ---------- */
-  #home{
-    min-height:100vh; display:flex; flex-direction:column;
-    align-items:flex-start; justify-content:center; padding-top:90px;
-  }
-  .prompt-line{ font-family:var(--font-mono); font-size:22px; color:var(--green); margin-bottom:8px; }
-  h1{ font-size:38px; color:var(--text); margin:14px 0 18px; }
-  h1 .hi{ color:var(--green); }
-  .tagline{ font-size:22px; color:var(--text-dim); max-width:46ch; margin-bottom:34px; }
+    /* Hero 3D Stage */
+    .hero-diorama {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 0; background: transparent; border: none; box-shadow: none;
+    }
+    #avatar3d {
+      width: 240px; height: 280px; cursor: pointer;
+      background: transparent; filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5));
+    }
 
-  .sprite-wrap{ margin:26px 0 40px; }
-  #sprite{ width:120px; height:auto; animation:bob 1.4s steps(2) infinite; }
-  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-6px);} }
+    /* Character Sheet */
+    .sheet { padding: 34px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px 36px; }
+    .sheet-row { display: flex; flex-direction: column; gap: 4px; }
+    .sheet-label { font-family: var(--font-pixel); font-size: 10px; color: var(--text-dim); }
+    .sheet-value { font-size: 22px; color: var(--text); }
+    .stat { margin-top: 6px; }
+    .stat-name { display: flex; justify-content: space-between; font-size: 16px; color: var(--text-dim); margin-bottom: 4px; }
+    .bar { height: 14px; background: var(--line); }
+    .bar > span { display: block; height: 100%; background: var(--coral); }
+    .stat:nth-child(2) .bar > span { background: var(--green); }
+    .stat:nth-child(3) .bar > span { background: var(--amber); }
 
-  .btn-row{ display:flex; gap:16px; flex-wrap:wrap; }
-  .btn{
-    font-family:var(--font-pixel); font-size:12px; padding:16px 22px;
-    background:var(--green); color:var(--bg); border:none;
-    box-shadow:4px 4px 0 var(--line);
-    transition:transform .1s, box-shadow .1s;
-    cursor:pointer; display:inline-block;
-  }
-  .btn.secondary{ background:var(--panel); color:var(--amber); box-shadow:4px 4px 0 var(--line), 0 0 0 3px var(--amber) inset; }
-  .btn:hover{ transform:translate(2px,2px); box-shadow:2px 2px 0 var(--line); }
-  .scroll-cue{ margin-top:56px; font-size:14px; color:var(--text-dim); animation:blink 1.4s steps(1) infinite; }
+    /* Quests & Activity Feed */
+    .quests-wrapper { display: grid; grid-template-columns: 2.2fr 1fr; gap: 28px; }
+    .quest-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; perspective: 1200px; }
+    .quest {
+      padding: 20px; display: flex; flex-direction: column; gap: 10px;
+      transform-style: preserve-3d; will-change: transform; cursor: pointer;
+    }
+    .quest:hover, .quest:focus-visible { outline: 3px solid var(--green); filter: brightness(1.1); }
+    .quest-head, .quest p, .tags { transform: translateZ(20px); transform-style: preserve-3d; }
+    .quest-diff { transform: translateZ(30px); font-size: 13px; color: var(--amber); }
+    .quest-title { font-family: var(--font-pixel); font-size: 12px; color: var(--green); }
+    .quest p { font-size: 17px; color: var(--text-dim); line-height: 1.5; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+    .tag { font-size: 12px; padding: 2px 7px; background: var(--panel-lt); color: var(--text); border: 2px solid var(--line); }
+    .quest[hidden] { display: none; }
 
-  /* ---------- character sheet (about) ---------- */
-  .sheet{ padding:34px; display:grid; grid-template-columns:1fr 1fr; gap:28px 40px; }
-  .sheet-row{ display:flex; flex-direction:column; gap:4px; }
-  .sheet-label{ font-family:var(--font-pixel); font-size:10px; color:var(--text-dim); }
-  .sheet-value{ font-size:22px; color:var(--text); }
-  .stat{ margin-top:6px; }
-  .stat-name{ display:flex; justify-content:space-between; font-size:16px; color:var(--text-dim); margin-bottom:4px; }
-  .bar{ height:14px; background:var(--line); }
-  .bar > span{ display:block; height:100%; background:var(--coral); }
-  .stat:nth-child(2) .bar > span{ background:var(--green); }
-  .stat:nth-child(3) .bar > span{ background:var(--amber); }
+    .live-log { padding: 20px; font-size: 15px; color: var(--text-dim); display: flex; flex-direction: column; gap: 12px; height: fit-content; }
+    .live-log h3 { font-size: 11px; color: var(--amber); border-bottom: 2px solid var(--line); padding-bottom: 8px; }
+    .log-entry { display: flex; gap: 8px; border-left: 2px solid var(--green); padding-left: 8px; }
 
-  /* ---------- quest log (projects) ---------- */
-  .quest-grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; }
-  .quest{ padding:24px; display:flex; flex-direction:column; gap:12px; }
-  .quest-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
-  .quest-title{ font-family:var(--font-pixel); font-size:13px; color:var(--green); }
-  .quest-diff{ font-size:14px; color:var(--amber); white-space:nowrap; }
-  .quest p{ font-size:18px; color:var(--text-dim); }
-  .tags{ display:flex; flex-wrap:wrap; gap:8px; margin-top:auto; }
-  .tag{ font-size:13px; padding:3px 9px; background:var(--panel-lt); color:var(--text); border:2px solid var(--line); }
+    /* Inventory */
+    .inventory { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px; }
+    .item {
+      aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; padding: 12px; text-align: center; cursor: pointer; transition: filter .15s;
+    }
+    .item:hover { filter: brightness(1.2); }
+    .item .glyph { font-size: 26px; color: var(--amber); font-family: var(--font-pixel); }
+    .item span.name { font-size: 14px; color: var(--text-dim); }
 
-  /* ---------- inventory (skills) ---------- */
-  .inventory{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:16px; }
-  .item{
-    aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:8px; padding:12px; text-align:center;
-  }
-  .item .glyph{ font-size:26px; color:var(--amber); font-family:var(--font-pixel); }
-  .item span.name{ font-size:15px; color:var(--text-dim); }
+    /* Save & Resume Sections */
+    .save, .resume-box { padding: 34px; text-align: center; }
+    .save h2, .resume-box h2 { margin-bottom: 14px; }
+    .save p, .resume-box p { margin: 0 auto 24px; }
+    .links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 
-  /* ---------- save point (contact) ---------- */
-  .save{ padding:34px; text-align:center; }
-  .save h2{ margin-bottom:14px; }
-  .save p{ margin:0 auto 26px; }
-  .links{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+    /* Themes & Modals */
+    body[data-theme="dungeon"] { --bg: #140c08; --panel: #22140d; --panel-lt: #3d2315; --green: #ff9f43; --amber: #ffe16a; --text: #fff3df; --text-dim: #a37f5d; }
+    body[data-theme="terminal"] { --bg: #051009; --panel: #0a1c10; --panel-lt: #13331e; --green: #75ff9c; --amber: #d5ff63; --text: #e9ffe9; --text-dim: #76997e; }
+    #progressHud { position: fixed; right: 16px; bottom: 16px; z-index: 70; width: 220px; padding: 12px; background: var(--panel); border: 3px solid var(--line); }
+    #progressHud .hud-label { font-family: var(--font-pixel); font-size: 9px; color: var(--amber); display: flex; justify-content: space-between; margin-bottom: 6px; }
+    #xpBar { height: 8px; background: var(--line); }
+    #xpBar span { display: block; width: 0; height: 100%; background: var(--green); transition: width .35s steps(8); }
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 24px; }
+    .filter.active { background: var(--green); color: var(--bg); }
+    .modal { position: fixed; inset: 0; z-index: 950; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.82); }
+    .modal[hidden] { display: none; }
+    .modal-card { width: min(640px, 100%); max-height: 85vh; overflow: auto; padding: 28px; background: var(--panel); border: 4px solid var(--line); }
+    .modal-head { display: flex; gap: 16px; align-items: start; justify-content: space-between; margin-bottom: 16px; }
+    .modal h3 { color: var(--green); font-size: 15px; }
+    .modal p { color: var(--text-dim); margin-bottom: 18px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+    #terminalOutput { min-height: 120px; color: var(--green); white-space: pre-wrap; margin-bottom: 12px; font-size: 18px; }
+    #commandInput { width: 100%; font: 20px var(--font-mono); color: var(--green); background: #030509; border: 3px solid var(--line); padding: 10px; caret-color: var(--green); }
+    #commandInput:focus { outline: 3px solid var(--green); }
+    #toast { position: fixed; top: 85px; left: 50%; z-index: 960; transform: translate(-50%, -20px); opacity: 0; pointer-events: none; padding: 10px 14px; color: var(--bg); background: var(--green); font-family: var(--font-pixel); font-size: 9px; box-shadow: 4px 4px 0 var(--line); transition: .2s steps(2); }
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .thunder { animation: flash .55s steps(2); }
+    @keyframes flash { 0%, 100% { filter: none; } 35% { filter: brightness(1.55) contrast(1.1); } }
 
-  footer{ text-align:center; padding:30px; color:var(--text-dim); font-size:14px; }
+    footer { text-align: center; padding: 30px; color: var(--text-dim); font-size: 14px; position: relative; z-index: 1; }
 
-  /* ---------- interactive systems ---------- */
-  body[data-theme="dungeon"]{ --bg:#18100b; --panel:#291911; --panel-lt:#4b2d1c; --line:#120906; --green:#ff9f43; --coral:#ff5f77; --amber:#ffe16a; --text:#fff3df; --text-dim:#c39d78; }
-  body[data-theme="terminal"]{ --bg:#07120c; --panel:#0c2114; --panel-lt:#123520; --line:#020805; --green:#75ff9c; --coral:#ff6985; --amber:#d5ff63; --text:#e9ffe9; --text-dim:#92b79b; }
-  .hud-actions{ display:flex; align-items:center; gap:10px; }
-  .icon-btn{ font-family:var(--font-pixel); font-size:10px; padding:9px 10px; color:var(--amber); background:var(--panel-lt); border:2px solid var(--line); cursor:pointer; }
-  .icon-btn:hover,.icon-btn:focus-visible{ color:var(--green); outline:2px solid var(--green); }
-  #progressHud{ position:fixed; right:16px; bottom:16px; z-index:70; width:min(240px,calc(100vw - 32px)); padding:13px; background:var(--panel); border:3px solid var(--line); box-shadow:4px 4px 0 var(--line); }
-  #progressHud .hud-label{ font-family:var(--font-pixel); font-size:9px; color:var(--amber); display:flex; justify-content:space-between; margin-bottom:8px; }
-  #xpBar{ height:10px; background:var(--line); }
-  #xpBar span{ display:block; width:0; height:100%; background:var(--green); transition:width .35s steps(8); }
-  .filter-row{ display:flex; gap:10px; flex-wrap:wrap; margin:-12px 0 28px; }
-  .filter.active{ background:var(--green); color:var(--bg); }
-  .quest{ cursor:pointer; transition:transform .15s steps(2), filter .15s; }
-  .quest:hover,.quest:focus-visible{ transform:translate(-3px,-3px); filter:brightness(1.15); outline:3px solid var(--green); }
-  .quest[hidden]{ display:none; }
-  .modal{ position:fixed; inset:0; z-index:200; display:grid; place-items:center; padding:20px; background:rgba(0,0,0,.72); }
-  .modal[hidden]{ display:none; }
-  .modal-card{ width:min(690px,100%); max-height:88vh; overflow:auto; padding:30px; background:var(--panel); border:4px solid var(--line); box-shadow:7px 7px 0 var(--panel-lt); }
-  .modal-head{ display:flex; gap:16px; align-items:start; justify-content:space-between; margin-bottom:18px; }
-  .modal h3{ color:var(--green); font-size:17px; }
-  .modal p{ color:var(--text-dim); margin-bottom:20px; }
-  .modal .close{ flex:0 0 auto; }
-  .detail-stack{ display:flex; flex-wrap:wrap; gap:8px; margin:20px 0; }
-  .cmd-hint{ font-size:15px; color:var(--text-dim); margin-top:18px; }
-  #terminalOutput{ min-height:130px; color:var(--green); white-space:pre-wrap; margin-bottom:14px; }
-  #commandInput{ width:100%; font:22px var(--font-mono); color:var(--green); background:#05070d; border:3px solid var(--line); padding:11px; caret-color:var(--green); }
-  #commandInput:focus{ outline:3px solid var(--green); }
-  #toast{ position:fixed; top:75px; left:50%; z-index:300; transform:translate(-50%,-20px); opacity:0; pointer-events:none; padding:12px 16px; color:var(--bg); background:var(--green); font-family:var(--font-pixel); font-size:10px; box-shadow:4px 4px 0 var(--line); transition:.2s steps(2); }
-  #toast.show{ opacity:1; transform:translate(-50%,0); }
-  .thunder{ animation:flash .55s steps(2); }
-  @keyframes flash{ 0%,100%{ filter:none; } 35%{ filter:brightness(1.55) contrast(1.1); } }
-
-  @media (max-width:760px){
-    nav ul{ display:none; }
-    .sheet{ grid-template-columns:1fr; }
-    .quest-grid{ grid-template-columns:1fr; }
-    h1{ font-size:28px; }
-    .hud-actions .icon-btn:first-child{ display:none; }
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition:none !important; }
-  }
-</style>
+    @media (max-width: 880px) {
+      #home { grid-template-columns: 1fr; }
+      .quests-wrapper { grid-template-columns: 1fr; }
+      .quest-grid { grid-template-columns: 1fr; }
+      .sheet { grid-template-columns: 1fr; }
+      nav ul { display: none; }
+    }
+  </style>
 </head>
 <body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="crt-overlay"></div>
 
 <div id="boot">
   <div id="bootText"></div>
@@ -232,7 +227,7 @@
 </div>
 
 <header>
-  <div class="logo"><span class="dot"></span>KARN.EXE</div>
+  <div class="logo" role="button" tabindex="0"><span class="dot"></span>AAYUSH_KARN.EXE</div>
   <nav>
     <ul>
       <li><a href="#home">Home</a></li>
@@ -240,206 +235,222 @@
       <li><a href="#quests">Quests</a></li>
       <li><a href="#inventory">Inventory</a></li>
       <li><a href="#save">Save</a></li>
+      <li><a href="#resume" class="nav-highlight">Resume</a></li>
     </ul>
   </nav>
   <div class="hud-actions">
-    <button class="icon-btn" id="terminalButton" type="button" aria-haspopup="dialog">~ COMMAND</button>
-    <button class="icon-btn" id="soundButton" type="button" aria-pressed="false">SFX: OFF</button>
+    <button class="icon-btn" id="terminalButton" type="button">~ COMMAND</button>
+    <button class="icon-btn" id="soundButton" type="button">SFX: OFF</button>
   </div>
 </header>
 
 <section id="home">
-  <span class="prompt-line">&gt; loading profile...</span>
-  <div class="sprite-wrap">
-    <svg id="sprite" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div>
+    <span class="prompt-line">&gt; system.mount("aayush_karn.profile")</span>
+    <h1>I am <span class="hi">Aayush Karn</span>_</h1>
+    <p class="tagline">Computer science undergrad who likes building fun tools: custom terminal emulators, local retrieval pipelines, autonomous Discord bots, and interactive web engines.</p>
+    <div class="btn-row">
+      <a class="btn" href="#quests">Inspect Quests</a>
+      <a class="btn secondary" href="mailto:karnaayush249@gmail.com">Save &amp; Contact</a>
+    </div>
   </div>
-  <h1>Hey, I'm <span class="hi">Karn</span>_</h1>
-  <p class="tagline">Computer science undergrad who likes building tools instead of just using them — terminals, retrieval pipelines, bots, and whatever else needs a weekend project.</p>
-  <div class="btn-row">
-    <a class="btn" href="#quests">View Quests</a>
-    <a class="btn secondary" href="#save">Save &amp; Contact</a>
+  <div class="hero-diorama">
+    <div id="avatar3d" title="Click to interact!"></div>
   </div>
-  <div class="scroll-cue">▼ scroll to continue ▼</div>
 </section>
 
 <section id="about">
   <span class="eyebrow">// character sheet</span>
-  <h2>About</h2>
+  <h2>Unit Dossier</h2>
   <div class="sheet pixel-border">
     <div class="sheet-row">
       <span class="sheet-label">CLASS</span>
-      <span class="sheet-value">CS Undergraduate</span>
+      <span class="sheet-value">B.Tech CSE (AI &amp; Data Analytics) · 2nd Year</span>
     </div>
     <div class="sheet-row">
-      <span class="sheet-label">CURRENT QUESTS</span>
-      <span class="sheet-value">Software Engineering · DBMS</span>
+      <span class="sheet-label">LOCATION &amp; CONTACT</span>
+      <span class="sheet-value" style="font-size:18px;">Phagwara, Punjab · +91 6202699356</span>
     </div>
     <div class="sheet-row" style="grid-column:1/-1">
-      <span class="sheet-label">BIO</span>
-      <span class="sheet-value" style="font-size:18px;">Edit this with your own words — a couple of sentences on what you're into and what you're working toward.</span>
+      <span class="sheet-label">PROFILE SUMMARY</span>
+      <span class="sheet-value" style="font-size:18px; line-height:1.6;">Second-year B.Tech CSE student specializing in AI &amp; Data Analytics at Lovely Professional University. Experienced across the data workflow: from cleaning and analyzing data with Python (Pandas, NumPy) to visualizing insights in Power BI and Excel, backed by a strong foundation in full-stack web development and core programming.</span>
     </div>
     <div class="sheet-row" style="grid-column:1/-1">
-      <span class="sheet-label">STATS (placeholder — adjust to taste)</span>
+      <span class="sheet-label">ACADEMIC STANDING &amp; COURSEWORK</span>
+      <div style="margin-top:10px; line-height: 1.6; font-size:17px; color:var(--text-dim);">
+        <p><strong style="color:var(--amber);">Institution:</strong> Lovely Professional University, Phagwara, Punjab</p>
+        <p><strong style="color:var(--amber);">CGPA:</strong> 7.83 (Semester 1) · 7.04 (Semester 2)</p>
+        <p><strong style="color:var(--amber);">Coursework:</strong> Software Engineering (CSE 320), Database Management Systems (DBMS: normalization, functional dependencies, SQL, transaction management), SQL and Data Visualization (CSE 259: advanced SQL, database design, optimization, Power BI data modeling and dashboarding).</p>
+      </div>
+    </div>
+    <div class="sheet-row" style="grid-column:1/-1">
+      <span class="sheet-label">STATS CALIBRATION</span>
       <div class="stat">
-        <div class="stat-name"><span>C++ / DSA</span><span>80%</span></div>
+        <div class="stat-name"><span>Python / Pandas / NumPy</span><span>80%</span></div>
         <div class="bar"><span style="width:80%"></span></div>
       </div>
       <div class="stat">
-        <div class="stat-name"><span>Python / ML tooling</span><span>70%</span></div>
+        <div class="stat-name"><span>SQL &amp; DBMS</span><span>75%</span></div>
+        <div class="bar"><span style="width:75%"></span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-name"><span>Web Development (HTML/CSS/JS/Node)</span><span>70%</span></div>
         <div class="bar"><span style="width:70%"></span></div>
       </div>
       <div class="stat">
-        <div class="stat-name"><span>Web / Frontend</span><span>65%</span></div>
-        <div class="bar"><span style="width:65%"></span></div>
+        <div class="stat-name"><span>Power BI &amp; Excel Visualization</span><span>75%</span></div>
+        <div class="bar"><span style="width:75%"></span></div>
       </div>
     </div>
   </div>
 </section>
 
 <section id="quests">
-  <span class="eyebrow">// quest log</span>
-  <h2>Projects</h2>
-  <div class="filter-row" aria-label="Project filters">
+  <span class="eyebrow">// mission ledger</span>
+  <h2>Quest Log</h2>
+  <div class="filter-row">
     <button class="btn filter active" type="button" data-filter="all">ALL</button>
-    <button class="btn filter" type="button" data-filter="web">WEB</button>
-    <button class="btn filter" type="button" data-filter="python">PYTHON</button>
-    <button class="btn filter" type="button" data-filter="ai">AI / LLM</button>
-    <button class="btn filter" type="button" data-filter="cli">CLI</button>
+    <button class="btn filter" type="button" data-filter="ai">AI / RAG</button>
+    <button class="btn filter" type="button" data-filter="web">WEB / TOOLS</button>
+    <button class="btn filter" type="button" data-filter="cli">CLI / SYS</button>
   </div>
-  <div class="quest-grid">
 
-    <article class="quest pixel-border" tabindex="0" data-project="terminal" data-tags="cli">
-      <div class="quest-head">
-        <span class="quest-title">Custom Terminal Emulator</span>
-        <span class="quest-diff">★★★☆</span>
-      </div>
-      <p>Built a Node.js terminal from scratch using raw ANSI escape codes — tab completion, cursor movement, color-coded output, six switchable themes, and a figlet boot banner.</p>
-      <div class="tags"><span class="tag">Node.js</span><span class="tag">ANSI/TUI</span><span class="tag">CLI</span></div>
-    </article>
+  <div class="quests-wrapper">
+    <div class="quest-grid">
+      <article class="quest pixel-border" tabindex="0" data-project="rag" data-tags="ai">
+        <div class="quest-head">
+          <span class="quest-title">PDF Question-Answering Tool (RAG Pipeline)</span>
+          <span class="quest-diff">★★★★</span>
+        </div>
+        <p>Built a local Retrieval-Augmented Generation pipeline in Python answering natural-language queries using strictly document content[cite: 2]. Extracted text via pypdf, embedded using nomic-embed-text via Ollama, indexed vectors in ChromaDB, and generated answers using Llama 3.2 with paragraph-aware chunking[cite: 2].</p>
+        <div class="tags"><span class="tag">Python</span><span class="tag">ChromaDB</span><span class="tag">Ollama</span><span class="tag">Llama 3.2</span><span class="tag">pypdf</span></div>
+      </article>
 
-    <article class="quest pixel-border" tabindex="0" data-project="rag" data-tags="python ai">
-      <div class="quest-head">
-        <span class="quest-title">PDF RAG Pipeline</span>
-        <span class="quest-diff">★★★★</span>
-      </div>
-      <p>A local, no-API RAG tool that answers plain-English questions about a PDF. Chunks text, embeds with Ollama, stores vectors in ChromaDB, and answers grounded strictly in retrieved context.</p>
-      <div class="tags"><span class="tag">Python</span><span class="tag">ChromaDB</span><span class="tag">Ollama / LLM</span></div>
-    </article>
+      <article class="quest pixel-border" tabindex="0" data-project="mcq" data-tags="web">
+        <div class="quest-head">
+          <span class="quest-title">Interactive Study Tools: MCQ &amp; Timed Quiz App</span>
+          <span class="quest-diff">★★★☆</span>
+        </div>
+        <p>Designed two self-contained study platforms: an MCQ platform delivering 220+ questions across six units and a timed quiz app featuring real-time score tracking and active recall feedback[cite: 2]. Built with pure HTML/CSS/JS without dependencies, completely portable and offline[cite: 2].</p>
+        <div class="tags"><span class="tag">HTML/CSS/JS</span><span class="tag">Offline-First</span><span class="tag">Vanilla JS</span></div>
+      </article>
 
-    <article class="quest pixel-border" tabindex="0" data-project="discord" data-tags="ai">
-      <div class="quest-head">
-        <span class="quest-title">VIBIN CITY — Discord Bot</span>
-        <span class="quest-diff">★★★☆</span>
-      </div>
-      <p>A Discord bot that impersonates my own persona in a friend-group server, powered by a locally-run Ollama model — no cloud calls, all on-device.</p>
-      <div class="tags"><span class="tag">Discord.js</span><span class="tag">Ollama</span><span class="tag">LLM</span></div>
-    </article>
+      <article class="quest pixel-border" tabindex="0" data-project="powershell" data-tags="cli">
+        <div class="quest-head">
+          <span class="quest-title">Custom PowerShell Terminal UI</span>
+          <span class="quest-diff">★★★☆</span>
+        </div>
+        <p>Customized an efficient PowerShell console environment featuring custom prompt theming, specialized automation aliases, and custom terminal functions to streamline everyday command-line workflows and system operations[cite: 2].</p>
+        <div class="tags"><span class="tag">PowerShell</span><span class="tag">CLI</span><span class="tag">Shell Scripting</span></div>
+      </article>
 
-    <article class="quest pixel-border" tabindex="0" data-project="mcq" data-tags="web">
-      <div class="quest-head">
-        <span class="quest-title">MCQ Practice Site (CSE 320)</span>
-        <span class="quest-diff">★★☆☆</span>
-      </div>
-      <p>A self-contained interactive practice website with 220 questions across six units, built as a single dark-themed HTML file straight from course material.</p>
-      <div class="tags"><span class="tag">HTML/CSS/JS</span><span class="tag">Single-file</span></div>
-    </article>
+      <article class="quest pixel-border" tabindex="0" data-project="terminal" data-tags="cli">
+        <div class="quest-head">
+          <span class="quest-title">Custom Terminal Emulator</span>
+          <span class="quest-diff">★★★☆</span>
+        </div>
+        <p>Built a custom terminal interface utilizing raw ANSI escape codes: tab completion, cursor movement control, theme toggling, and formatted boot banners.</p>
+        <div class="tags"><span class="tag">Node.js</span><span class="tag">ANSI</span><span class="tag">CLI / TUI</span></div>
+      </article>
+    </div>
 
+    <aside class="live-log pixel-border">
+      <h3>// RADAR LOGS</h3>
+      <div class="log-entry"><span>01</span><span>ChromaDB local vector space initialized.</span></div>
+      <div class="log-entry"><span>02</span><span>Ollama nomic-embed-text active.</span></div>
+      <div class="log-entry"><span>03</span><span>MCQ question bank loaded: 220 items.</span></div>
+      <div class="log-entry"><span>04</span><span>Hero avatar ready for deployment.</span></div>
+    </aside>
   </div>
 </section>
 
 <section id="inventory">
-  <span class="eyebrow">// inventory</span>
-  <h2>Tools &amp; Languages</h2>
+  <span class="eyebrow">// armory</span>
+  <h2>Technical Arsenal</h2>
   <div class="inventory">
-    <button class="item pixel-border" type="button" data-skill="C++ / DSA — algorithmic problem solving, complexity analysis, and competitive programming."><span class="glyph">C++</span><span class="name">Competitive Prog.</span></button>
-    <button class="item pixel-border" type="button" data-skill="Python — automation, data tools, and practical machine-learning workflows."><span class="glyph">PY</span><span class="name">Python</span></button>
-    <button class="item pixel-border" type="button" data-skill="JavaScript — browser interfaces, interactive components, and Discord bots."><span class="glyph">JS</span><span class="name">JavaScript</span></button>
-    <button class="item pixel-border" type="button" data-skill="SQL / DBMS — relational data modelling, queries, and database fundamentals."><span class="glyph">SQL</span><span class="name">DBMS</span></button>
-    <button class="item pixel-border" type="button" data-skill="Git — source control, project history, and collaborative workflows."><span class="glyph">GIT</span><span class="name">Git</span></button>
-    <button class="item pixel-border" type="button" data-skill="Local LLM tooling — offline model workflows with Ollama and retrieval pipelines."><span class="glyph">LLM</span><span class="name">Local LLM tooling</span></button>
+    <button class="item pixel-border" type="button" data-skill="Python: Data cleaning, analysis, automation, and local AI pipelines using Pandas, NumPy, Matplotlib, and pypdf."><span class="glyph">PY</span><span class="name">Python</span></button>
+    <button class="item pixel-border" type="button" data-skill="SQL &amp; DBMS: Relational schema design, normalization, functional dependencies, indexing, and complex queries."><span class="glyph">SQL</span><span class="name">SQL / DBMS</span></button>
+    <button class="item pixel-border" type="button" data-skill="Power BI &amp; Excel: Data modeling, dynamic measures, KPI dashboards, and business insights."><span class="glyph">BI</span><span class="name">Power BI / Excel</span></button>
+    <button class="item pixel-border" type="button" data-skill="C &amp; C++: Algorithmic problem solving, complexity analysis, and core programming foundations."><span class="glyph">C++</span><span class="name">C / C++</span></button>
+    <button class="item pixel-border" type="button" data-skill="Web Development: Responsive interfaces, interactive tooling, and frontend architectures with HTML, CSS, JavaScript, React.js, and Node.js."><span class="glyph">WEB</span><span class="name">Full-Stack Web</span></button>
+    <button class="item pixel-border" type="button" data-skill="AI &amp; Vector Stores: Local embeddings with nomic-embed-text, Ollama inference with Llama 3.2, and vector similarity search in ChromaDB."><span class="glyph">RAG</span><span class="name">Local RAG / AI</span></button>
+    <button class="item pixel-border" type="button" data-skill="Version Control &amp; Shell: Git, GitHub collaboration, and custom PowerShell command-line environments."><span class="glyph">GIT</span><span class="name">Git / Shell</span></button>
   </div>
 </section>
 
 <section id="save">
   <div class="save pixel-border">
-    <span class="eyebrow" style="text-align:center;">// save point</span>
+    <span class="eyebrow" style="text-align:center;">// beacon</span>
     <h2>Let's connect</h2>
-    <p style="margin-left:auto;margin-right:auto;">Add your real email, GitHub, and LinkedIn links here before this goes live.</p>
+    <p>Feel free to reach out for internship opportunities, collaborations, or data projects.</p>
     <div class="links">
-      <a class="btn" href="mailto:you@example.com">Email</a>
-      <a class="btn secondary" href="#">GitHub</a>
-      <a class="btn secondary" href="#">LinkedIn</a>
+      <a class="btn" href="mailto:karnaayush249@gmail.com">Email</a>
+      <a class="btn secondary" href="https://github.com/karn-blip" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a class="btn secondary" href="https://www.linkedin.com/in/aayush-karn-a281ab36b/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
     </div>
   </div>
 </section>
 
-<footer>KARN.EXE — built with pixels &amp; patience</footer>
+<section id="resume">
+  <div class="resume-box pixel-border">
+    <span class="eyebrow" style="text-align:center;">// records</span>
+    <h2>Curriculum Vitae</h2>
+    <p>Aayush Karn · Aspiring Data Analyst · Computer Science (AI &amp; Data Analytics)[cite: 2]</p>
+    <div class="links">
+      <button class="btn" id="downloadPdfBtn" type="button">Download Resume (PDF)</button>
+      <a class="btn secondary" href="mailto:karnaayush249@gmail.com">Contact Directly</a>
+    </div>
+  </div>
+</section>
 
-<aside id="progressHud" aria-live="polite">
-  <div class="hud-label"><span>EXPLORATION XP</span><span id="xpText">0 / 6</span></div>
+<footer>AAYUSH_KARN.EXE: built with pixels and patience</footer>
+
+<aside id="progressHud">
+  <div class="hud-label"><span>EXPLORATION XP</span><span id="xpText">0 / 10</span></div>
   <div id="xpBar"><span></span></div>
 </aside>
 
-<div class="modal" id="projectModal" hidden role="dialog" aria-modal="true" aria-labelledby="projectTitle">
+<div class="modal" id="projectModal" hidden>
   <div class="modal-card">
     <div class="modal-head"><h3 id="projectTitle"></h3><button class="icon-btn close" type="button">X CLOSE</button></div>
-    <p id="projectDescription"></p><div class="detail-stack" id="projectStack"></div>
-    <button class="btn secondary projectClose" type="button">RETURN TO QUEST LOG</button>
+    <p id="projectDescription"></p>
+    <div class="detail-stack" id="projectStack"></div>
+    <div class="modal-actions">
+      <a class="btn" id="projectDemoBtn" href="#" target="_blank" rel="noopener noreferrer">LAUNCH LIVE DEMO</a>
+      <a class="btn secondary" id="projectRepoBtn" href="#" target="_blank" rel="noopener noreferrer">VIEW CODE</a>
+      <button class="btn secondary projectClose" type="button">RETURN TO QUEST LOG</button>
+    </div>
   </div>
 </div>
 
-<div class="modal" id="terminalModal" hidden role="dialog" aria-modal="true" aria-labelledby="terminalTitle">
-  <div class="modal-card">
-    <div class="modal-head"><h3 id="terminalTitle">KARN.EXE COMMAND TERMINAL</h3><button class="icon-btn close" type="button">X CLOSE</button></div>
-    <div id="terminalOutput">Type <strong>help</strong> to list commands.</div>
-    <label for="commandInput" class="sheet-label">COMMAND INPUT</label>
-    <input id="commandInput" autocomplete="off" spellcheck="false" placeholder="help">
-    <p class="cmd-hint">Commands: help · about · projects · contact · theme [castle|dungeon|terminal] · sound · clear</p>
+<div class="modal" id="itemInspectModal" hidden>
+  <div class="modal-card" style="text-align:center;">
+    <div class="modal-head"><h3 id="inspectTitle"></h3><button class="icon-btn close" type="button">X CLOSE</button></div>
+    <div id="artifactCanvasContainer" style="width:200px; height:200px; margin:0 auto;"></div>
+    <p id="inspectDescription" style="margin-top:16px;"></p>
+    <button class="btn secondary close" type="button" style="margin-top: 20px;">CLOSE INSPECT</button>
   </div>
 </div>
-<div id="toast" role="status" aria-live="polite"></div>
+
+<div class="modal" id="terminalModal" hidden>
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="terminalTitle">AAYUSH_KARN.EXE COMMAND TERMINAL</h3><button class="icon-btn close" type="button">X CLOSE</button></div>
+    <div id="terminalOutput">Type <strong>help</strong> to list commands.</div>
+    <input id="commandInput" autocomplete="off" spellcheck="false" placeholder="help">
+  </div>
+</div>
+
+<div id="toast"></div>
 
 <script>
-  // ---- pixel sprite (12x16 grid), two idle frames ----
-  const frameA = [
-    "......HH....",
-    ".....HHHH...",
-    ".....HHHH...",
-    "....DKKKKD..",
-    "....DKKKKD..",
-    "....DKKKKD..",
-    ".....DDDD...",
-    "...DBBBBBD..",
-    "..DBBBBBBBD.",
-    "..DBBBBBBBD.",
-    ".DBBBBBBBBD.",
-    "..DBB..BBD..",
-    "..DBB..BBD..",
-    "..DD....DD..",
-    ".DD......DD.",
-    "............"
-  ];
-  const colors = { H:"var(--coral)", K:"var(--amber)", B:"var(--green)", D:"var(--line)" };
-
-  function buildSprite(){
-    const svg = document.getElementById('sprite');
-    let rects = "";
-    frameA.forEach((row,y)=>{
-      [...row].forEach((c,x)=>{
-        if(c !== "." && c !== " "){
-          rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${colors[c] || '#fff'}"></rect>`;
-        }
-      });
-    });
-    svg.innerHTML = rects;
-  }
-  buildSprite();
-
-  // ---- boot sequence ----
+  // ==========================================
+  // 1. BOOT SEQUENCE & UTILITIES
+  // ==========================================
   const bootLines = [
-    "> BOOTING KARN.EXE ...",
-    "> loading modules: terminal.js, rag.py, discord-bot.js",
-    "> checking coursework: CSE320, DBMS ... OK",
+    "> BOOTING AAYUSH_KARN.EXE ...",
+    "> specialization: AI & DATA ANALYTICS",
+    "> checking coursework: CSE320, CSE259, DBMS ... OK",
+    "> mounting modules: pypdf, chromadb, ollama, power_bi ... READY.",
     "> READY."
   ];
   const bootEl = document.getElementById('bootText');
@@ -447,163 +458,751 @@
   let li = 0, ci = 0;
 
   function typeBoot(){
+    if(!bootEl) return;
     if(li >= bootLines.length){
       bootEl.innerHTML += '<span class="cursor"></span>';
-      setTimeout(hideBoot, 500);
+      setTimeout(() => bootOverlay && bootOverlay.classList.add('hide'), 400);
       return;
     }
     const line = bootLines[li];
     if(ci <= line.length){
-      const typed = bootLines.slice(0,li).join("\n") + (li>0 ? "\n" : "") + line.slice(0,ci);
-      bootEl.textContent = typed;
-      ci++;
-      setTimeout(typeBoot, 18);
+      bootEl.textContent = bootLines.slice(0, li).join("\n") + (li > 0 ? "\n" : "") + line.slice(0, ci);
+      ci++; 
+      setTimeout(typeBoot, 16);
     } else {
-      li++; ci = 0;
-      setTimeout(typeBoot, 200);
+      li++; 
+      ci = 0; 
+      setTimeout(typeBoot, 140);
     }
   }
+  typeBoot();
 
-  function hideBoot(){
-    bootOverlay.classList.add('hide');
+  if(bootOverlay){
+    bootOverlay.addEventListener('click', () => bootOverlay.classList.add('hide'));
+    window.addEventListener('scroll', () => bootOverlay.classList.add('hide'), { once: true });
   }
 
-  // respect reduced motion: skip the typing animation, just show it instantly then hide
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(prefersReduced){
-    bootEl.textContent = bootLines.join("\n");
-    setTimeout(hideBoot, 400);
-  } else {
-    typeBoot();
-  }
-
-  bootOverlay.addEventListener('click', hideBoot);
-  window.addEventListener('scroll', hideBoot, { once:true });
-  window.addEventListener('keydown', hideBoot, { once:true });
-
-  // ---- interactive quest log, terminal, inventory, and achievements ----
-  const projects = {
-    terminal: { title:"Custom Terminal Emulator", description:"A Node.js terminal built from raw ANSI escape codes. It supports tab completion, cursor movement, six themes, a figlet boot banner, and color-coded output.", stack:["Node.js", "ANSI escape codes", "CLI / TUI"] },
-    rag: { title:"PDF RAG Pipeline", description:"An offline question-answering tool for PDFs. It chunks text, creates local embeddings, stores vectors in ChromaDB, then answers using only retrieved context.", stack:["Python", "ChromaDB", "Ollama", "Retrieval"] },
-    discord: { title:"VIBIN CITY — Discord Bot", description:"A personality-driven Discord bot that runs locally with Ollama. The goal: fun friend-group interactions without cloud model calls.", stack:["Discord.js", "Ollama", "Local LLM"] },
-    mcq: { title:"MCQ Practice Site (CSE 320)", description:"A focused single-file study site with 220 questions across six course units, designed for quick self-testing in a dark interface.", stack:["HTML", "CSS", "JavaScript"] }
-  };
-  const projectModal = document.getElementById('projectModal');
-  const terminalModal = document.getElementById('terminalModal');
-  const projectTitle = document.getElementById('projectTitle');
-  const projectDescription = document.getElementById('projectDescription');
-  const projectStack = document.getElementById('projectStack');
-  const commandInput = document.getElementById('commandInput');
-  const terminalOutput = document.getElementById('terminalOutput');
-  const toast = document.getElementById('toast');
+  const MAX_XP = 10;
   const progress = new Set();
   let audioOn = false;
+  let audioCtx = null;
   let toastTimer;
 
-  function showToast(message){
-    toast.textContent = message;
+  function showToast(msg){
+    const toast = document.getElementById('toast');
+    if(!toast) return;
+    toast.textContent = msg; 
     toast.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=>toast.classList.remove('show'), 2600);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
   }
-  function award(id, message){
+
+  function award(id, msg){
     if(progress.has(id)) return;
     progress.add(id);
-    const total = 6;
-    document.getElementById('xpText').textContent = `${progress.size} / ${total}`;
-    document.querySelector('#xpBar span').style.width = `${Math.min(progress.size / total, 1) * 100}%`;
-    showToast(`ACHIEVEMENT UNLOCKED: ${message}`);
+    const xpText = document.getElementById('xpText');
+    if(xpText) xpText.textContent = `${progress.size} / ${MAX_XP}`;
+    const xpBarSpan = document.querySelector('#xpBar span');
+    if(xpBarSpan) xpBarSpan.style.width = `${Math.min(100, (progress.size / MAX_XP) * 100)}%`;
+    showToast(`ACHIEVEMENT: ${msg}`);
   }
-  function beep(frequency=180, duration=.06){
-    if(!audioOn || !window.AudioContext) return;
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator(); const gain = ctx.createGain();
-    osc.frequency.value = frequency; osc.type = 'square'; gain.gain.value = .035;
-    osc.connect(gain).connect(ctx.destination); osc.start();
-    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + duration);
-    osc.stop(ctx.currentTime + duration); osc.addEventListener('ended',()=>ctx.close());
+
+  function beep(f = 180, d = .06){
+    if(!audioOn) return;
+    try {
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if(audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator(); 
+      const g = audioCtx.createGain();
+      osc.frequency.value = f; 
+      osc.type = 'square'; 
+      g.gain.value = .03;
+      osc.connect(g).connect(audioCtx.destination); 
+      osc.start();
+      g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + d);
+      osc.stop(audioCtx.currentTime + d);
+    } catch(e) {}
   }
-  function openProject(id){
-    const project = projects[id]; if(!project) return;
-    projectTitle.textContent = project.title;
-    projectDescription.textContent = project.description;
-    projectStack.innerHTML = project.stack.map(item=>`<span class="tag">${item}</span>`).join('');
-    projectModal.hidden = false;
-    projectModal.querySelector('.close').focus();
-    award(`project-${id}`, 'QUEST INSPECTED'); beep(240);
-  }
-  function closeModal(modal){ modal.hidden = true; }
-  document.querySelectorAll('.quest').forEach(card=>{
-    card.addEventListener('click',()=>openProject(card.dataset.project));
-    card.addEventListener('keydown',event=>{ if(event.key === 'Enter' || event.key === ' '){ event.preventDefault(); openProject(card.dataset.project); } });
-  });
-  document.querySelectorAll('.filter').forEach(button=>button.addEventListener('click',()=>{
-    const filter = button.dataset.filter;
-    document.querySelectorAll('.filter').forEach(item=>item.classList.toggle('active', item === button));
-    document.querySelectorAll('.quest').forEach(card=>card.hidden = filter !== 'all' && !card.dataset.tags.includes(filter));
-    award('filter', 'QUEST TRACKER ONLINE'); beep(155);
-  }));
-  document.querySelectorAll('.item[data-skill]').forEach(item=>item.addEventListener('click',()=>{
-    showToast(item.dataset.skill); award('inventory', 'INVENTORY EXAMINED'); beep(290);
-  }));
-  document.querySelectorAll('.modal').forEach(modal=>{
-    modal.addEventListener('click',event=>{ if(event.target === modal) closeModal(modal); });
-    modal.querySelectorAll('.close,.projectClose').forEach(button=>button.addEventListener('click',()=>closeModal(modal)));
-  });
-  function setTheme(theme){
-    document.body.dataset.theme = theme === 'castle' ? '' : theme;
-    showToast(`THEME LOADED: ${theme.toUpperCase()}`);
-    award('theme', 'REALITY RECOLORED'); beep(200);
-  }
-  function runCommand(raw){
-    const command = raw.trim().toLowerCase();
-    const commands = {
-      help:"AVAILABLE COMMANDS\nhelp — show this list\nabout — jump to character sheet\nprojects — jump to quest log\ncontact — jump to save point\ntheme castle|dungeon|terminal — change palette\nsound — toggle ambient SFX\nclear — clear terminal",
-      about:"Opening character sheet...",
-      projects:"Opening quest log...",
-      contact:"Opening save point...",
-      sound:"Sound toggled.",
-      clear:""
-    };
-    if(command.startsWith('theme ')){
-      const theme = command.split(/\s+/)[1];
-      if(["castle","dungeon","terminal"].includes(theme)){ setTheme(theme); terminalOutput.textContent = `Theme changed to ${theme}.`; }
-      else terminalOutput.textContent = "Unknown theme. Try castle, dungeon, or terminal.";
-    } else if(command === 'clear') terminalOutput.textContent = '';
-    else if(commands[command] !== undefined){
-      terminalOutput.textContent = commands[command];
-      if(["about","projects","contact"].includes(command)){
-        document.getElementById(command === 'projects' ? 'quests' : command === 'contact' ? 'save' : 'about').scrollIntoView({behavior:'smooth'});
-        closeModal(terminalModal);
-      }
-      if(command === 'sound') document.getElementById('soundButton').click();
-    } else terminalOutput.textContent = `Unknown command: ${command}\nType help for available commands.`;
-    award('terminal', 'TERMINAL ACCESS GRANTED'); beep(220);
-  }
-  document.getElementById('terminalButton').addEventListener('click',()=>{ terminalModal.hidden = false; commandInput.focus(); });
-  commandInput.addEventListener('keydown',event=>{ if(event.key === 'Enter'){ runCommand(commandInput.value); commandInput.value = ''; } });
-  document.getElementById('soundButton').addEventListener('click',event=>{
-    audioOn = !audioOn; event.currentTarget.textContent = `SFX: ${audioOn ? 'ON' : 'OFF'}`; event.currentTarget.setAttribute('aria-pressed', audioOn);
-    if(audioOn) beep(330,.12);
-    showToast(audioOn ? 'AMBIENT SFX ENABLED' : 'AMBIENT SFX MUTED'); award('sound', 'SOUNDSTONE ACTIVATED');
-  });
-  document.querySelector('.logo').addEventListener('click',()=>{ document.body.classList.add('thunder'); setTimeout(()=>document.body.classList.remove('thunder'), 550); award('logo', 'STORM CALLER'); beep(80,.18); });
-  document.querySelector('.logo').setAttribute('role','button'); document.querySelector('.logo').setAttribute('tabindex','0');
-  document.querySelector('.logo').addEventListener('keydown',event=>{ if(event.key === 'Enter') event.currentTarget.click(); });
-  window.addEventListener('keydown',event=>{
-    if(event.key === '~' && !terminalModal.hidden) return;
-    if(event.key === '~'){ event.preventDefault(); terminalModal.hidden = false; commandInput.focus(); }
-    if(event.key === 'Escape') document.querySelectorAll('.modal:not([hidden])').forEach(closeModal);
-  });
-  let konami = [];
-  const code = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-  window.addEventListener('keydown',event=>{
-    konami.push(event.key); konami = konami.slice(-code.length);
-    if(konami.join('|').toLowerCase() === code.join('|').toLowerCase()){
-      setTheme('terminal'); showToast('SECRET UNLOCKED: THE CASTLE REMEMBERS YOU'); award('secret', 'ANCIENT CHEAT CODE');
+
+  // ==========================================
+  // EMBEDDED PDF GENERATION (DIRECT DOWNLOAD)
+  // ==========================================
+  function downloadEmbeddedCV() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const margin = 40;
+    let y = 45;
+
+    function addHeader(title) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(30, 41, 59);
+      doc.text(title, margin, y);
+      y += 4;
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.75);
+      doc.line(margin, y, 595 - margin, y);
+      y += 14;
     }
+
+    // Name & Top Info
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42);
+    doc.text('AAYUSH KARN', margin, y);
+    y += 16;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.text('Aspiring Data Analyst | Computer Science (AI & Data Analytics)', margin, y);
+    y += 13;
+    doc.text('Phagwara, Punjab  |  +91 6202699356  |  karnaayush249@gmail.com', margin, y);
+    y += 20;
+
+    // Profile Summary
+    addHeader('PROFILE SUMMARY');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(51, 65, 85);
+    const summary = "Second-year B.Tech CSE student specializing in AI & Data Analytics, with hands-on project experience building data-driven web tools. Comfortable across the data workflow: from cleaning and analyzing data with Python (Pandas, NumPy) to visualizing insights in Power BI and Excel. Strong foundation in programming (C, C++, Python, SQL, JavaScript) and full-stack web development (HTML, CSS, Node.js, React). Actively seeking an internship to apply analytical thinking to real-world business problems.";
+    const splitSummary = doc.splitTextToSize(summary, 595 - margin * 2);
+    doc.text(splitSummary, margin, y);
+    y += splitSummary.length * 12 + 12;
+
+    // Education
+    addHeader('EDUCATION');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text('B.Tech, Computer Science & Engineering (AI and Data Analytics)', margin, y);
+    y += 12;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(71, 85, 105);
+    doc.text('Lovely Professional University, Phagwara, Punjab  |  CGPA: 7.83 (Sem 1), 7.04 (Sem 2)  |  Currently in 2nd Year', margin, y);
+    y += 12;
+
+    const eduCourse = "Relevant coursework: Software Engineering (CSE 320), Database Management Systems (DBMS): normalization, functional dependencies, SQL, and transaction management, SQL and Data Visualization (CSE 259): advanced SQL, database design and optimization, Power BI data modeling and dashboarding.";
+    const splitEdu = doc.splitTextToSize(eduCourse, 595 - margin * 2);
+    doc.text(splitEdu, margin, y);
+    y += splitEdu.length * 12 + 12;
+
+    // Technical Skills
+    addHeader('TECHNICAL SKILLS');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(30, 41, 59);
+    doc.text('Programming Languages: ', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text('C, C++, Python, JavaScript, SQL', margin + 120, y);
+    y += 12;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 41, 59);
+    doc.text('Data Analysis & Viz: ', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text('Excel, Pandas, NumPy, Matplotlib, Power BI', margin + 120, y);
+    y += 12;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 41, 59);
+    doc.text('Web Development: ', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text('HTML, CSS, Node.js, React.js', margin + 120, y);
+    y += 12;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 41, 59);
+    doc.text('Tools & Environments: ', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text('Git, GitHub, PowerShell, ChromaDB, Ollama', margin + 120, y);
+    y += 18;
+
+    // Projects
+    addHeader('PROJECTS');
+    
+    // Project 1
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Interactive Study Tools: MCQ Practice Platform & Timed Quiz App', margin, y);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Personal Project', 595 - margin - 70, y);
+    y += 12;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 65, 85);
+    const p1 = [
+      "• Designed and built two self-contained study web apps: an MCQ practice platform delivering 220+ questions across 6 units, and a timed quiz application with score tracking and instant feedback for active recall.",
+      "• Built entirely with HTML, CSS, and JavaScript with zero external dependencies, fully portable and usable offline, with a clean, distraction-free, dark-themed UI."
+    ];
+    p1.forEach(bullet => {
+      const splitB = doc.splitTextToSize(bullet, 595 - margin * 2);
+      doc.text(splitB, margin, y);
+      y += splitB.length * 11 + 3;
+    });
+    y += 6;
+
+    // Project 2
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('PDF Question-Answering Tool (RAG Pipeline)', margin, y);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Personal Project', 595 - margin - 70, y);
+    y += 12;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 65, 85);
+    const p2 = [
+      "• Built a Retrieval-Augmented Generation (RAG) pipeline in Python that answers natural-language questions about a PDF using only the document's own content.",
+      "• Extracted and chunked PDF text with pypdf, generated embeddings using a local Ollama model (nomic-embed-text), and stored them in ChromaDB for similarity-based retrieval.",
+      "• Implemented a retrieval-and-answer flow that surfaces the most relevant chunks and feeds them to a local LLM (Llama 3.2) to generate context-grounded answers.",
+      "• Improved retrieval quality by switching from fixed-length text chunking to paragraph-aware chunking."
+    ];
+    p2.forEach(bullet => {
+      const splitB = doc.splitTextToSize(bullet, 595 - margin * 2);
+      doc.text(splitB, margin, y);
+      y += splitB.length * 11 + 3;
+    });
+    y += 6;
+
+    // Project 3
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('Custom PowerShell Terminal UI', margin, y);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Personal Project', 595 - margin - 70, y);
+    y += 12;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 65, 85);
+    const p3 = "• Customized a PowerShell terminal environment with a tailored prompt theme and custom functions and aliases to streamline everyday command-line workflows.";
+    const splitP3 = doc.splitTextToSize(p3, 595 - margin * 2);
+    doc.text(splitP3, margin, y);
+    y += splitP3.length * 11 + 16;
+
+    // Additional Info
+    addHeader('ADDITIONAL INFORMATION');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(51, 65, 85);
+    doc.text('• Languages: English, Hindi', margin, y);
+    y += 12;
+    doc.text('• Objective: Interested in expanding into applied AI and data analytics tooling through hands-on internship experience.', margin, y);
+
+    // Trigger local save
+    doc.save('Aayush_Karn_CV.pdf');
+    showToast('RESUME DOWNLOADED');
+    beep(480, 0.1);
+  }
+
+  const downloadBtn = document.getElementById('downloadPdfBtn');
+  if(downloadBtn) downloadBtn.addEventListener('click', downloadEmbeddedCV);
+
+  // ==========================================
+  // 2. BACKGROUND 3D (TINY CROWS & WISPS)
+  // ==========================================
+  const bgCanvas = document.getElementById('bg-canvas');
+  const bgScene = new THREE.Scene();
+  const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, alpha: true, antialias: false });
+  bgRenderer.setSize(window.innerWidth, window.innerHeight);
+
+  const bgAmbient = new THREE.AmbientLight(0x757e9e, 1.2);
+  bgScene.add(bgAmbient);
+
+  function createVoxelCrow() {
+    const crow = new THREE.Group();
+    const crowMat = new THREE.MeshLambertMaterial({ color: 0x222a42 });
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff4d6d });
+    
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.25, 0.55), crowMat);
+    crow.add(body);
+    
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.28), crowMat);
+    head.position.set(0, 0.12, 0.35);
+    const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), eyeMat);
+    eyeR.position.set(0.12, 0.15, 0.38);
+    const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), eyeMat);
+    eyeL.position.set(-0.12, 0.15, 0.38);
+    crow.add(head);
+    crow.add(eyeR);
+    crow.add(eyeL);
+
+    const wingGeom = new THREE.BoxGeometry(0.75, 0.04, 0.35);
+    const leftWing = new THREE.Mesh(wingGeom, crowMat);
+    leftWing.position.set(-0.38, 0.06, 0);
+    const rightWing = new THREE.Mesh(wingGeom, crowMat);
+    rightWing.position.set(0.38, 0.06, 0);
+    crow.add(leftWing);
+    crow.add(rightWing);
+
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.04, 0.28), crowMat);
+    tail.position.set(0, -0.03, -0.38);
+    crow.add(tail);
+
+    const dir = Math.random() > 0.5 ? 1 : -1;
+    crow.rotation.y = dir === 1 ? Math.PI / 2 : -Math.PI / 2;
+
+    return { 
+      group: crow, leftWing, rightWing, dir,
+      speed: (0.16 + Math.random() * 0.14) * dir, 
+      wingSpeed: 0.22 + Math.random() * 0.1,
+      baseY: 0, phaseOffset: Math.random() * Math.PI * 2
+    };
+  }
+
+  const crows = [];
+  for(let i = 0; i < 45; i++) {
+    const crowData = createVoxelCrow();
+    crowData.baseY = (Math.random() - 0.5) * 55;
+    crowData.group.position.set((Math.random() - 0.5) * 110, crowData.baseY, 8 + Math.random() * 16);
+    bgScene.add(crowData.group);
+    crows.push(crowData);
+  }
+
+  const flameColors = [0xff2200, 0xff4d00, 0xff7b00, 0xffa200, 0xffd23f];
+  const darkWispColors = [0x12172b, 0x1d2440, 0x2e1a38, 0x181a24];
+  const wisps = [];
+  const wispGroup = new THREE.Group();
+
+  for(let i = 0; i < 160; i++) {
+    const isDark = Math.random() > 0.6;
+    const col = isDark 
+      ? darkWispColors[Math.floor(Math.random() * darkWispColors.length)]
+      : flameColors[Math.floor(Math.random() * flameColors.length)];
+    
+    const size = isDark ? (0.4 + Math.random() * 0.4) : (0.25 + Math.random() * 0.3);
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(size, size * (isDark ? 1.2 : 1.6), size),
+      new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: isDark ? 0.65 : 0.88 })
+    );
+    
+    mesh.position.set((Math.random() - 0.5) * 85, (Math.random() - 0.5) * 75, (Math.random() - 0.5) * 40);
+    wispGroup.add(mesh);
+    wisps.push({
+      mesh, baseX: mesh.position.x,
+      speedY: (isDark ? 0.03 : 0.06) + Math.random() * 0.08,
+      swayFreq: 0.02 + Math.random() * 0.04,
+      swayAmp: 0.5 + Math.random() * 0.9,
+      seed: Math.random() * 100
+    });
+  }
+  bgScene.add(wispGroup);
+  bgCamera.position.z = 30;
+
+  window.addEventListener('scroll', () => {
+    const maxScroll = document.body.scrollHeight - window.innerHeight;
+    const p = window.scrollY / (maxScroll || 1);
+    bgCamera.position.y = -p * 20;
+    bgCamera.rotation.z = p * 0.15;
+  });
+
+  let clock = 0;
+  function animateBg(){
+    requestAnimationFrame(animateBg);
+    clock += 0.05;
+
+    crows.forEach(c => {
+      c.group.position.x += c.speed;
+      c.group.position.y = c.baseY + Math.sin(clock * 1.8 + c.phaseOffset) * 1.4;
+      const wingAngle = Math.sin(clock * 10 * c.wingSpeed) * 0.65;
+      c.leftWing.rotation.z = wingAngle;
+      c.rightWing.rotation.z = -wingAngle;
+      if(c.dir === 1 && c.group.position.x > 60) c.group.position.x = -60;
+      if(c.dir === -1 && c.group.position.x < -60) c.group.position.x = 60;
+    });
+
+    wisps.forEach(w => {
+      w.mesh.position.y += w.speedY;
+      w.mesh.position.x = w.baseX + Math.sin(clock * w.swayFreq * 10 + w.seed) * w.swayAmp;
+      w.mesh.rotation.z = Math.sin(clock + w.seed) * 0.3;
+      if(w.mesh.position.y > 38) {
+        w.mesh.position.y = -38;
+        w.mesh.position.x = (Math.random() - 0.5) * 85;
+        w.baseX = w.mesh.position.x;
+      }
+    });
+
+    bgRenderer.render(bgScene, bgCamera);
+  }
+  animateBg();
+
+  // ==========================================
+  // 3. FLOATING HERO AVATAR WITH SWORD SWING & JUMP
+  // ==========================================
+  const heroContainer = document.getElementById('avatar3d');
+  const heroScene = new THREE.Scene();
+  const heroCamera = new THREE.PerspectiveCamera(40, 240 / 280, 0.1, 100);
+  const heroRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  heroRenderer.setSize(240, 280);
+  heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  if(heroContainer) heroContainer.appendChild(heroRenderer.domElement);
+  heroCamera.position.set(0, 0.6, 6.5);
+
+  const heroLight = new THREE.DirectionalLight(0xffffff, 1.6);
+  heroLight.position.set(3, 5, 4);
+  heroScene.add(heroLight, new THREE.AmbientLight(0x666666));
+
+  const karnGroup = new THREE.Group();
+  const voxelMat = (hex) => new THREE.MeshLambertMaterial({ color: hex });
+
+  function createVoxel(x, y, z, color){
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), voxelMat(color));
+    mesh.position.set(x * 0.3, y * 0.3, z * 0.3);
+    return mesh;
+  }
+
+  const colGreen = 0x39ff88; 
+  const colSkin = 0xd9a066;
+  const colHair = 0x151515;
+  const colDark = 0x141a2e;
+  const colHilt = 0x2e1d13;
+  const colBlade = 0xd8dde6;
+
+  for (let x = -1; x <= 1; x++) {
+    for (let y = 1; y <= 3; y++) {
+      for (let z = -1; z <= 1; z++) {
+        karnGroup.add(createVoxel(x, y, z, (y === 3) ? colHair : colSkin));
+      }
+    }
+  }
+  for (let x = -1.5; x <= 1.5; x++) {
+    for (let y = -2; y <= 0; y++) {
+      karnGroup.add(createVoxel(x, y, 0, colGreen));
+    }
+  }
+  karnGroup.add(createVoxel(-1, -3, 0, colDark));
+  karnGroup.add(createVoxel(1, -3, 0, colDark));
+
+  const swordArm = new THREE.Group();
+  swordArm.position.set(2.3 * 0.3, -2 * 0.3, 0);
+
+  const hiltVoxel = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), voxelMat(colHilt));
+  hiltVoxel.position.set(0, 0, 0);
+  swordArm.add(hiltVoxel);
+
+  for (let y = 1; y <= 3; y++) {
+    const bladeVoxel = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), voxelMat(colBlade));
+    bladeVoxel.position.set(0, y * 0.3, 0);
+    swordArm.add(bladeVoxel);
+  }
+  karnGroup.add(swordArm);
+  heroScene.add(karnGroup);
+
+  let targetHeroY = 0, targetHeroX = 0;
+  window.addEventListener('mousemove', (e) => {
+    targetHeroY = (e.clientX / window.innerWidth) * 1.6 - 0.8;
+    targetHeroX = (e.clientY / window.innerHeight) * 0.8 - 0.4;
+  });
+
+  let isSlashing = false;
+  let isJumping = false;
+  let animProgress = 0;
+  let nextAction = 'slash';
+
+  function triggerAvatarAction() {
+    if (isSlashing || isJumping) return;
+
+    if (nextAction === 'slash') {
+      isSlashing = true;
+      animProgress = 0;
+      nextAction = 'jump';
+      beep(560, 0.1);
+      award('avatar', 'BLADE UNSHEATHED');
+    } else {
+      isJumping = true;
+      animProgress = 0;
+      nextAction = 'slash';
+      beep(380, 0.12);
+      award('avatar', 'AVATAR AWAKENED');
+    }
+  }
+
+  if(heroContainer) heroContainer.addEventListener('click', triggerAvatarAction);
+
+  function animateHero(){
+    requestAnimationFrame(animateHero);
+    karnGroup.rotation.y += (targetHeroY - karnGroup.rotation.y) * 0.08;
+    karnGroup.rotation.x += (targetHeroX - karnGroup.rotation.x) * 0.08;
+
+    if (isSlashing) {
+      animProgress += 0.16;
+      swordArm.rotation.x = -Math.sin(animProgress) * 1.65;
+      swordArm.rotation.z = -Math.sin(animProgress) * 0.75;
+      if (animProgress >= Math.PI) {
+        isSlashing = false;
+        swordArm.rotation.x = 0;
+        swordArm.rotation.z = 0;
+      }
+    } else if (isJumping) {
+      animProgress += 0.12;
+      karnGroup.position.y = Math.sin(animProgress) * 1.3;
+      karnGroup.rotation.z = Math.sin(animProgress * 2) * 0.2;
+      if (animProgress >= Math.PI) {
+        isJumping = false;
+        karnGroup.position.y = 0;
+        karnGroup.rotation.z = 0;
+      }
+    } else {
+      karnGroup.position.y = Math.sin(Date.now() * 0.0035) * 0.15;
+    }
+
+    heroRenderer.render(heroScene, heroCamera);
+  }
+  animateHero();
+
+  // ==========================================
+  // 4. TACTILE CARD TILT
+  // ==========================================
+  document.querySelectorAll('.quest').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      card.style.transform = `perspective(800px) rotateX(${-(y / (rect.height / 2)) * 10}deg) rotateY(${(x / (rect.width / 2)) * 10}deg)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg)';
+    });
+  });
+
+  // ==========================================
+  // 5. 3D ITEM INSPECTION
+  // ==========================================
+  const inspectModal = document.getElementById('itemInspectModal');
+  const inspectContainer = document.getElementById('artifactCanvasContainer');
+  const inspectScene = new THREE.Scene();
+  const inspectCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  const inspectRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
+  inspectRenderer.setSize(200, 200);
+  if(inspectContainer) inspectContainer.appendChild(inspectRenderer.domElement);
+  inspectCamera.position.set(0, 0, 4.5);
+
+  const inspLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  inspLight.position.set(2, 4, 3);
+  inspectScene.add(inspLight, new THREE.AmbientLight(0x666666));
+
+  let activeArtifact = null;
+  const artifactShapes = {
+    "PY":  new THREE.TorusKnotGeometry(0.7, 0.22, 32, 8),
+    "SQL": new THREE.CylinderGeometry(1.1, 1.1, 1.3, 8),
+    "BI":  new THREE.BoxGeometry(1.2, 1.2, 1.2),
+    "C++": new THREE.OctahedronGeometry(1.3, 0),
+    "WEB": new THREE.BoxGeometry(1.3, 1.3, 1.3),
+    "RAG": new THREE.IcosahedronGeometry(1.3, 0),
+    "GIT": new THREE.DodecahedronGeometry(1.2, 0)
+  };
+
+  function inspectItem(glyph, skillName, description){
+    if(activeArtifact) inspectScene.remove(activeArtifact);
+    const geom = artifactShapes[glyph] || new THREE.BoxGeometry(1.2, 1.2, 1.2);
+    activeArtifact = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({ color: 0xffd23f, wireframe: true }));
+    inspectScene.add(activeArtifact);
+
+    const inspectTitle = document.getElementById('inspectTitle');
+    const inspectDesc = document.getElementById('inspectDescription');
+    if(inspectTitle) inspectTitle.textContent = `// ${skillName.toUpperCase()}`;
+    if(inspectDesc) inspectDesc.textContent = description;
+    if(inspectModal) inspectModal.hidden = false;
+    award('inventory', 'INVENTORY EXAMINED');
+    beep(290);
+  }
+
+  function animateInspect(){
+    requestAnimationFrame(animateInspect);
+    if(activeArtifact){
+      activeArtifact.rotation.y += 0.015;
+      activeArtifact.rotation.x += 0.008;
+    }
+    inspectRenderer.render(inspectScene, inspectCamera);
+  }
+  animateInspect();
+
+  document.querySelectorAll('.item[data-skill]').forEach(item => {
+    item.addEventListener('click', () => {
+      const glyph = item.querySelector('.glyph').textContent.trim();
+      const name = item.querySelector('.name').textContent.trim();
+      inspectItem(glyph, name, item.dataset.skill);
+    });
+  });
+
+  // ==========================================
+  // 6. MODALS, QUESTS, HUD & COMMANDS
+  // ==========================================
+  const projects = {
+    rag: { 
+      title: "PDF Question-Answering Tool (RAG Pipeline)", 
+      description: "Built a Retrieval-Augmented Generation (RAG) pipeline in Python that answers natural-language questions about a PDF using strictly document content. Extracted and chunked PDF text using pypdf, generated semantic embeddings with nomic-embed-text via Ollama, and stored vectors in ChromaDB. Surfaced top chunks to Llama 3.2 to synthesize context-grounded responses, switching to paragraph-aware chunking to elevate retrieval quality.", 
+      stack: ["Python", "ChromaDB", "Ollama", "Llama 3.2", "pypdf"],
+      demo: "https://github.com/karn-blip",
+      repo: "https://github.com/karn-blip"
+    },
+    mcq: { 
+      title: "Interactive Study Tools: MCQ & Timed Quiz Platform", 
+      description: "Engineered two self-contained study web tools: an MCQ practice platform delivering 220+ questions across 6 units and a timed quiz application featuring active score tracking and immediate active-recall feedback. Built entirely with pure HTML, CSS, and JavaScript with zero build dependencies, full offline capability, and a distraction-free dark UI.", 
+      stack: ["HTML", "CSS", "JavaScript", "Vanilla JS"],
+      demo: "https://karn-blip.github.io",
+      repo: "https://github.com/karn-blip"
+    },
+    powershell: { 
+      title: "Custom PowerShell Terminal UI", 
+      description: "Configured an optimized PowerShell console environment featuring custom prompt theming, targeted automation aliases, and specialized utility functions to streamline command-line workflows.", 
+      stack: ["PowerShell", "CLI", "Shell Scripting"],
+      demo: "https://github.com/karn-blip",
+      repo: "https://github.com/karn-blip"
+    },
+    terminal: { 
+      title: "Custom Terminal Emulator", 
+      description: "A Node.js terminal environment constructed using raw ANSI escape codes: tab completion, cursor coordinate manipulation, switchable themes, and boot banners.", 
+      stack: ["Node.js", "ANSI", "CLI / TUI"],
+      demo: "https://github.com/karn-blip",
+      repo: "https://github.com/karn-blip"
+    }
+  };
+
+  const projectModal = document.getElementById('projectModal');
+  const projectDemoBtn = document.getElementById('projectDemoBtn');
+  const projectRepoBtn = document.getElementById('projectRepoBtn');
+
+  function openProject(key) {
+    const p = projects[key];
+    if(!p) return;
+    const titleEl = document.getElementById('projectTitle');
+    const descEl = document.getElementById('projectDescription');
+    const stackEl = document.getElementById('projectStack');
+    if(titleEl) titleEl.textContent = p.title;
+    if(descEl) descEl.textContent = p.description;
+    if(stackEl) stackEl.innerHTML = p.stack.map(s => `<span class="tag">${s}</span>`).join('');
+    
+    if(projectDemoBtn) projectDemoBtn.href = p.demo;
+    if(projectRepoBtn) projectRepoBtn.href = p.repo;
+    
+    if(projectModal) projectModal.hidden = false;
+    award(`p-${key}`, 'LEDGER ENTRY READ');
+    beep(240);
+  }
+
+  document.querySelectorAll('.quest').forEach(card => {
+    card.addEventListener('click', () => openProject(card.dataset.project));
+    card.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openProject(card.dataset.project);
+      }
+    });
+  });
+
+  document.querySelectorAll('.filter').forEach(btn => btn.addEventListener('click', () => {
+    const f = btn.dataset.filter;
+    document.querySelectorAll('.filter').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.quest').forEach(c => c.hidden = f !== 'all' && !c.dataset.tags.includes(f));
+    award('filter', 'SORT PROTOCOL RUN');
+    beep(150);
+  }));
+
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', e => { if(e.target === m) m.hidden = true; });
+    m.querySelectorAll('.close, .projectClose').forEach(b => b.addEventListener('click', () => m.hidden = true));
+  });
+
+  const terminalModal = document.getElementById('terminalModal');
+  const commandInput = document.getElementById('commandInput');
+  const terminalOutput = document.getElementById('terminalOutput');
+
+  function setTheme(t){
+    document.body.dataset.theme = t === 'castle' ? '' : t;
+    showToast(`THEME: ${t.toUpperCase()}`);
+    award('theme', 'REALM REFORGED');
+    beep(210);
+  }
+
+  function runCmd(raw){
+    const cmd = raw.trim().toLowerCase();
+    if(!terminalOutput) return;
+    if(cmd === 'help') terminalOutput.textContent = "COMMANDS: about, quests, inventory, contact, resume, theme [castle|dungeon|terminal], sound, clear";
+    else if(cmd.startsWith('theme ')) setTheme(cmd.split(' ')[1]);
+    else if(cmd === 'clear') terminalOutput.textContent = '';
+    else if(cmd === 'resume'){
+      const target = document.getElementById('resume');
+      if(target) target.scrollIntoView({ behavior: 'smooth' });
+      if(terminalModal) terminalModal.hidden = true;
+    } else if(['about', 'quests', 'inventory', 'contact'].includes(cmd)){
+      const target = document.getElementById(cmd === 'contact' ? 'save' : cmd);
+      if(target) target.scrollIntoView({ behavior: 'smooth' });
+      if(terminalModal) terminalModal.hidden = true;
+    } else terminalOutput.textContent = `Unknown command: ${cmd}`;
+    award('terminal', 'SHELL QUERY EXECUTED');
+  }
+
+  const termBtn = document.getElementById('terminalButton');
+  if(termBtn && terminalModal){
+    termBtn.addEventListener('click', () => { 
+      terminalModal.hidden = false; 
+      if(commandInput) commandInput.focus(); 
+    });
+  }
+  
+  if(commandInput){
+    commandInput.addEventListener('keydown', e => { 
+      if(e.key === 'Enter'){ 
+        runCmd(commandInput.value); 
+        commandInput.value = ''; 
+      } 
+    });
+  }
+
+  const sndBtn = document.getElementById('soundButton');
+  if(sndBtn){
+    sndBtn.addEventListener('click', e => {
+      audioOn = !audioOn; 
+      e.currentTarget.textContent = `SFX: ${audioOn ? 'ON' : 'OFF'}`;
+      if(audioOn) beep(330, .1);
+      showToast(audioOn ? 'SOUND ENGAGED' : 'MUTED');
+    });
+  }
+
+  const logoEl = document.querySelector('.logo');
+  function triggerThunder() {
+    document.body.classList.add('thunder');
+    setTimeout(() => document.body.classList.remove('thunder'), 500);
+    award('logo', 'LIGHTNING HARNESSED');
+    beep(70, .2);
+  }
+
+  if(logoEl){
+    logoEl.addEventListener('click', triggerThunder);
+    logoEl.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        triggerThunder();
+      }
+    });
+  }
+
+  window.addEventListener('keydown', e => {
+    if(e.key === '~' && terminalModal){ 
+      e.preventDefault(); 
+      terminalModal.hidden = false; 
+      if(commandInput) commandInput.focus(); 
+    }
+    if(e.key === 'Escape') document.querySelectorAll('.modal:not([hidden])').forEach(m => m.hidden = true);
+  });
+
+  window.addEventListener('resize', () => {
+    bgCamera.aspect = window.innerWidth / window.innerHeight;
+    bgCamera.updateProjectionMatrix();
+    bgRenderer.setSize(window.innerWidth, window.innerHeight);
   });
 </script>
-
 </body>
 </html>
