@@ -166,16 +166,16 @@
     .log-entry { display: flex; gap: 8px; border-left: 2px solid var(--green); padding-left: 8px; }
 
     /* GitHub expand */
-    .gh-expand { margin-top: 24px; grid-column: 1 / -1; }
+    .gh-expand { margin-top: 24px; grid-column: 1 / -1; padding: 12px 0; }
     .gh-toggle {
       width: 100%; display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; padding: 14px 18px; background: transparent; border: none;
+      gap: 12px; padding: 12px 18px; background: transparent; border: none;
       color: var(--green); font-family: var(--font-pixel); font-size: 10px;
       cursor: pointer; text-align: left;
     }
     .gh-toggle:hover { background: var(--panel-lt); }
     .gh-toggle-meta { font-family: var(--font-mono); font-size: 14px; color: var(--text-dim); font-weight: normal; }
-    .gh-list { padding: 0 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .gh-list { padding: 4px 14px 8px; display: flex; flex-direction: column; gap: 8px; }
     .gh-row {
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
       padding: 10px 12px; background: var(--panel-lt); border: 2px solid var(--line);
@@ -347,41 +347,23 @@
         <div class="tags"><span class="tag">Python</span><span class="tag">ChromaDB</span><span class="tag">Ollama</span><span class="tag">Llama 3.2</span><span class="tag">pypdf</span></div>
       </article>
 
-      <article class="quest pixel-border" tabindex="0" data-project="mcq" data-tags="web">
-        <div class="quest-head">
-          <span class="quest-title">Interactive Study Tools: MCQ &amp; Timed Quiz App</span>
-          <span class="quest-diff">★★★☆</span>
-        </div>
-        <p>Designed two self-contained study platforms: an MCQ platform with 220+ questions across six units and a timed quiz app featuring real-time score tracking and active-recall feedback. Built with pure HTML/CSS/JS — zero dependencies, fully portable and offline.</p>
-        <div class="tags"><span class="tag">HTML/CSS/JS</span><span class="tag">Offline-First</span><span class="tag">Vanilla JS</span></div>
-      </article>
-
-      <article class="quest pixel-border" tabindex="0" data-project="powershell" data-tags="cli">
-        <div class="quest-head">
-          <span class="quest-title">Custom PowerShell Terminal UI</span>
-          <span class="quest-diff">★★★☆</span>
-        </div>
-        <p>Customized an efficient PowerShell console environment featuring custom prompt theming, specialized automation aliases, and custom terminal functions to streamline everyday command-line workflows and system operations.</p>
-        <div class="tags"><span class="tag">PowerShell</span><span class="tag">CLI</span><span class="tag">Shell Scripting</span></div>
-      </article>
-
       <article class="quest pixel-border" tabindex="0" data-project="terminal" data-tags="cli">
         <div class="quest-head">
-          <span class="quest-title">Custom Terminal Emulator</span>
+          <span class="quest-title">Custom Terminal Emulator (Starstream CLI)</span>
           <span class="quest-diff">★★★☆</span>
         </div>
-        <p>Built a custom terminal interface utilizing raw ANSI escape codes: tab completion, cursor movement control, theme toggling, and formatted boot banners.</p>
+        <p>Built a Node.js terminal interface using raw ANSI escape codes: tab completion, cursor movement control, theme toggling, and formatted boot banners.</p>
         <div class="tags"><span class="tag">Node.js</span><span class="tag">ANSI</span><span class="tag">CLI / TUI</span></div>
       </article>
     </div>
 
-    <!-- Collapsible: All public GitHub repos -->
+    <!-- GitHub repos: show 3 by default, expand for more -->
     <div class="gh-expand pixel-border" id="ghExpand">
-      <button type="button" class="gh-toggle" id="ghToggle" aria-expanded="false">
-        <span class="gh-toggle-label">▼ SHOW ALL GITHUB REPOS</span>
-        <span class="gh-toggle-meta" id="ghMeta">loading...</span>
+      <div class="gh-list" id="ghList"></div>
+      <button type="button" class="gh-toggle" id="ghToggle" hidden>
+        <span class="gh-toggle-label">▼ SHOW MORE</span>
+        <span class="gh-toggle-meta" id="ghMeta"></span>
       </button>
-      <div class="gh-list" id="ghList" hidden></div>
     </div>
 
     <aside class="live-log pixel-border">
@@ -390,7 +372,7 @@
       <div class="log-entry"><span>02</span><span>Ollama nomic-embed-text active.</span></div>
       <div class="log-entry"><span>03</span><span>MCQ question bank loaded: 220 items.</span></div>
       <div class="log-entry"><span>04</span><span>Hero avatar ready for deployment.</span></div>
-      <div class="log-entry" id="gh-status"><span>05</span><span>GitHub link standing by...</span></div>
+      <div class="log-entry" id="gh-status"><span>05</span><span>Linking GitHub modules...</span></div>
     </aside>
   </div>
 </section>
@@ -1078,22 +1060,8 @@
       demo: "https://github.com/karn-blip/rag-project",
       repo: "https://github.com/karn-blip/rag-project"
     },
-    mcq: { 
-      title: "Interactive Study Tools: MCQ & Timed Quiz Platform", 
-      description: "Engineered two self-contained study web tools: an MCQ practice platform delivering 220+ questions across 6 units and a timed quiz application featuring active score tracking and immediate active-recall feedback. Built entirely with pure HTML, CSS, and JavaScript with zero build dependencies, full offline capability, and a distraction-free dark UI.", 
-      stack: ["HTML", "CSS", "JavaScript", "Vanilla JS"],
-      demo: "https://github.com/karn-blip",
-      repo: "https://github.com/karn-blip"
-    },
-    powershell: { 
-      title: "Custom PowerShell Terminal UI", 
-      description: "Configured an optimized PowerShell console environment featuring custom prompt theming, targeted automation aliases, and specialized utility functions to streamline command-line workflows.", 
-      stack: ["PowerShell", "CLI", "Shell Scripting"],
-      demo: "https://github.com/karn-blip",
-      repo: "https://github.com/karn-blip"
-    },
     terminal: { 
-      title: "Custom Terminal Emulator", 
+      title: "Custom Terminal Emulator (Starstream CLI)", 
       description: "A Node.js terminal environment constructed using raw ANSI escape codes: tab completion, cursor coordinate manipulation, switchable themes, and boot banners.", 
       stack: ["Node.js", "ANSI", "CLI / TUI"],
       demo: "https://github.com/karn-blip/starstream-cli",
@@ -1106,13 +1074,28 @@
   const projectRepoBtn = document.getElementById('projectRepoBtn');
 
   // ==========================================
-  // LIVE GITHUB REPOS (collapsible list)
+  // LIVE GITHUB REPOS (show 3, expand for more)
   // ==========================================
   function formatSyncTime(date) {
     return date.toLocaleString(undefined, {
       year: 'numeric', month: 'short', day: 'numeric',
       hour: '2-digit', minute: '2-digit'
     });
+  }
+
+  function makeRepoRow(repo) {
+    const desc = (repo.description && repo.description.trim()) || 'No description';
+    const row = document.createElement('a');
+    row.className = 'gh-row';
+    row.href = repo.html_url;
+    row.target = '_blank';
+    row.rel = 'noopener noreferrer';
+    row.innerHTML = `
+      <span class="gh-row-name">${repo.name}</span>
+      <span class="gh-row-desc">${desc}</span>
+      <span class="gh-row-meta">${repo.language || '—'} · ★${repo.stargazers_count}</span>
+    `;
+    return row;
   }
 
   async function loadGitHubProjects() {
@@ -1127,38 +1110,39 @@
       if (!res.ok) throw new Error('GitHub API ' + res.status);
       const repos = await res.json();
       const syncedAt = new Date();
-
-      // All public non-fork repos
       const publicRepos = repos.filter(r => !r.fork);
+      const PREVIEW = 3;
 
       listEl.innerHTML = '';
-      publicRepos.forEach(repo => {
-        const desc = (repo.description && repo.description.trim()) || 'No description';
-        const row = document.createElement('a');
-        row.className = 'gh-row';
-        row.href = repo.html_url;
-        row.target = '_blank';
-        row.rel = 'noopener noreferrer';
-        row.innerHTML = `
-          <span class="gh-row-name">${repo.name}</span>
-          <span class="gh-row-desc">${desc}</span>
-          <span class="gh-row-meta">${repo.language || '—'} · ★${repo.stargazers_count}</span>
-        `;
+      publicRepos.forEach((repo, i) => {
+        const row = makeRepoRow(repo);
+        if (i >= PREVIEW) row.hidden = true;
         listEl.appendChild(row);
       });
 
       const count = publicRepos.length;
-      if (metaEl) metaEl.textContent = `${count} repo${count !== 1 ? 's' : ''} · synced ${formatSyncTime(syncedAt)}`;
       if (statusEl) statusEl.innerHTML = `<span>05</span><span>GitHub synced ${formatSyncTime(syncedAt)} · ${count} public repos.</span>`;
 
-      // Toggle open/close
-      toggleBtn.addEventListener('click', () => {
-        const open = toggleBtn.getAttribute('aria-expanded') === 'true';
-        toggleBtn.setAttribute('aria-expanded', String(!open));
-        listEl.hidden = open;
+      if (count > PREVIEW) {
+        toggleBtn.hidden = false;
         const label = toggleBtn.querySelector('.gh-toggle-label');
-        if (label) label.textContent = open ? '▼ SHOW ALL GITHUB REPOS' : '▲ HIDE GITHUB REPOS';
-      });
+        if (metaEl) metaEl.textContent = `${count - PREVIEW} more · synced ${formatSyncTime(syncedAt)}`;
+        if (label) label.textContent = `▼ SHOW MORE (${count - PREVIEW})`;
+
+        let expanded = false;
+        toggleBtn.addEventListener('click', () => {
+          expanded = !expanded;
+          listEl.querySelectorAll('.gh-row').forEach((row, i) => {
+            if (i >= PREVIEW) row.hidden = !expanded;
+          });
+          if (label) label.textContent = expanded ? '▲ SHOW LESS' : `▼ SHOW MORE (${count - PREVIEW})`;
+          if (metaEl) metaEl.textContent = expanded
+            ? `synced ${formatSyncTime(syncedAt)}`
+            : `${count - PREVIEW} more · synced ${formatSyncTime(syncedAt)}`;
+        });
+      } else if (metaEl) {
+        metaEl.textContent = `${count} repo${count !== 1 ? 's' : ''} · synced ${formatSyncTime(syncedAt)}`;
+      }
     } catch (err) {
       console.warn('GitHub fetch failed:', err);
       if (metaEl) metaEl.textContent = 'offline';
